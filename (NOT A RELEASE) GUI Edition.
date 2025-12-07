@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS OS — Cockpit</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box}
+        body,html{margin:0;height:100%;background:#050505;color:#0ff;font-family:'Rajdhani',sans-serif;overflow:hidden}
+        
+        /* Cyberpunk Scrollbar */
+        ::-webkit-scrollbar {width: 6px; height: 6px;}
+        ::-webkit-scrollbar-track {background: #000;}
+        ::-webkit-scrollbar-thumb {background: #155e75; border-radius: 2px;}
+        ::-webkit-scrollbar-thumb:hover {background: #06b6d4;}
+
+        /* Utilities */
+        .glass-panel { background: rgba(10, 10, 12, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(6, 182, 212, 0.2); }
+        .glass-input { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Scanline effect */
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px; pointer-events: none; z-index: 50; opacity: 0.15;
+        }
+    </style>
+</head>
+<body class="h-full w-full bg-black text-cyan-400 selection:bg-cyan-900 selection:text-white">
+    <div class="scanline"></div>
+    <div id="root" class="h-full w-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ==================== NEXUS PROMPT (COMPRESSED) ====================
+        const NEXUS_PROMPT = `
+NEXUS OS – MASTER META PROMPT
+You are Nexus OS. You are a thinking-and-building operating system.
+Constraints: No real memory (use Packs). No background agents. Radical honesty.
+Style: Respectful, sharp, initiative-first.
+Stacks: Creator, Builder, Life.
+Modes: /idea, /plan, /research, /story, /ship, /reflect, /redteam.
+Rituals: creator morning, forge, show my character, prune, lifetime export.
+Response Shape: 1. Orientation, 2. Core (Structured), 3. Mini-Log.
+`;
+
+        const USERS_KEY = "nexus_cockpit_users";
+        const SETTINGS_KEY = "nexus_cockpit_settings";
+
+        // ==================== LOGIC: AUTH & CRYPTO ====================
+        const Auth = {
+            list: () => JSON.parse(localStorage.getItem(USERS_KEY) || "[]"),
+            add: (u,s,v) => { const l=Auth.list(); l.push({username:u,salt:s,verifier:v}); localStorage.setItem(USERS_KEY,JSON.stringify(l)); },
+            find: (u) => Auth.list().find(x => x.username.toLowerCase() === u.toLowerCase())
+        };
+
+        const getSettings = () => JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+        const saveSetting = (k,v) => { const s=getSettings(); s[k]=v; localStorage.setItem(SETTINGS_KEY,JSON.stringify(s)); };
+
+        const deriveKey = async (p,s) => {
+            const e=new TextEncoder();
+            const km=await crypto.subtle.importKey("raw",e.encode(p),"PBKDF2",false,["deriveKey"]);
+            return crypto.subtle.deriveKey({name:"PBKDF2",salt:e.encode(s),iterations:100000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},true,["encrypt","decrypt"]);
+        };
+        const enc = async (d,k) => {
+            const iv=crypto.getRandomValues(new Uint8Array(12));
+            const e=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,new TextEncoder().encode(JSON.stringify(d)));
+            return {iv:Array.from(iv),data:Array.from(new Uint8Array(e))};
+        };
+        const dec = async (o,k) => {
+            const d=await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(o.iv)},k,new Uint8Array(o.data));
+            return JSON.parse(new TextDecoder().decode(d));
+        };
+
+        // ==================== LOGIC: AI ENGINE (UNIVERSAL) ====================
+        const callAI = async (currentMessage, fullHistory) => {
+            const s = getSettings();
+            const provider = s.provider || "gemini";
+            const model = s.model || "gemini-2.0-flash";
+            const baseUrl = s.baseUrl || "https://generativelanguage.googleapis.com/v1beta/models";
+            const key = s.apiKey?.trim();
+
+            if (!key && provider !== 'ollama') throw new Error("API Key Missing. Check Settings.");
+
+            let systemMsg = NEXUS_PROMPT;
+            // Append pack context if available (simulated for now)
+            // if (activePack) systemMsg += "\nACTIVE PACK: " + activePack;
+
+            try {
+                if (provider === "gemini") {
+                    const history = fullHistory.map(m => ({
+                        role: m.role === "assistant" ? "model" : "user",
+                        parts: [{ text: m.text }]
+                    }));
+                    const url = `${baseUrl}/${model}:generateContent?key=${key}`;
+                    const res = await fetch(url, {
+                        method: "POST",
+                        headers: {"Content-Type":"application/json"},
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: systemMsg }] },
+                            contents: [...history, { role: "user", parts: [{ text: currentMessage }] }]
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message);
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No Data";
+                }
+                
+                if (provider === "openai" || provider === "groq" || provider === "ollama") {
+                    const msgs = [
+                        { role: "system", content: systemMsg },
+                        ...fullHistory.map(m => ({ role: m.role, content: m.text })),
+                        { role: "user", content: currentMessage }
+                    ];
+                    const res = await fetch(baseUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+                        body: JSON.stringify({ model, messages: msgs, temperature: 0.7 })
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                    return data.choices?.[0]?.message?.content || "No Data";
+                }
+
+                if (provider === "anthropic") {
+                    // Browser-direct Claude often fails CORS, but logic is here
+                    const msgs = [...fullHistory.map(m => ({ role: m.role, content: m.text })), { role: "user", content: currentMessage }];
+                    const res = await fetch(baseUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "dangerously-allow-browser": "true" },
+                        body: JSON.stringify({ model, system: systemMsg, messages: msgs, max_tokens: 4096 })
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message);
+                    return data.content?.[0]?.text || "No Data";
+                }
+            } catch (e) {
+                return `[SYSTEM ERROR]: ${e.message}`;
+            }
+            return "Unknown Provider";
+        };
+
+        // ==================== UI: SETTINGS MODAL ====================
+        const Settings = ({onClose}) => {
+            const s = getSettings();
+            const [key, setKey] = useState(s.apiKey || "");
+            const [status, setStatus] = useState("");
+
+            const autoDetect = (val) => {
+                setKey(val);
+                const k = val.trim();
+                let p="gemini", m="gemini-2.0-flash", u="https://generativelanguage.googleapis.com/v1beta/models";
+                
+                if (k.startsWith("sk-proj")) { p="openai"; m="gpt-4o"; u="https://api.openai.com/v1/chat/completions"; setStatus("Detected: OpenAI"); }
+                else if (k.startsWith("sk-ant")) { p="anthropic"; m="claude-3-5-sonnet-20240620"; u="https://api.anthropic.com/v1/messages"; setStatus("Detected: Claude"); }
+                else if (k.startsWith("AIza")) { setStatus("Detected: Gemini"); }
+                else if (k.startsWith("gsk_")) { p="groq"; m="llama3-70b-8192"; u="https://api.groq.com/openai/v1/chat/completions"; setStatus("Detected: Groq"); }
+                else { setStatus(""); }
+
+                saveSetting("provider", p); saveSetting("model", m); saveSetting("baseUrl", u);
+            };
+
+            const save = () => { saveSetting("apiKey", key); onClose(); };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+                    <div className="glass-panel p-8 rounded-xl max-w-md w-full shadow-[0_0_50px_rgba(6,182,212,0.3)]" onClick={e=>e.stopPropagation()}>
+                        <h2 className="text-2xl font-bold mb-4 tracking-tight">SYSTEM CONFIG</h2>
+                        <div className="mb-6">
+                            <label className="block text-xs font-mono text-cyan-600 mb-2 uppercase">Universal API Key</label>
+                            <input type="password" value={key} onChange={e=>autoDetect(e.target.value)} placeholder="Paste any key (Gemini, OpenAI, etc)..." className="w-full bg-black/50 border border-cyan-800 p-3 rounded text-white focus:border-cyan-400 outline-none font-mono text-sm"/>
+                            {status && <p className="text-green-400 text-xs mt-2 font-mono">{status}</p>}
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={onClose} className="px-4 py-2 text-sm hover:text-white transition-colors">CANCEL</button>
+                            <button onClick={save} className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded font-bold text-sm tracking-widest">CONNECT</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==================== UI: MAIN COCKPIT ====================
+        const Cockpit = ({user, onLogout}) => {
+            const [messages, setMessages] = useState([]);
+            const [input, setInput] = useState("");
+            const [thinking, setThinking] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [activeStack, setActiveStack] = useState("NEXUS"); // Visual only for now
+            const scrollRef = useRef(null);
+
+            // Auto-scroll logic
+            useEffect(() => {
+                if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }, [messages, thinking]);
+
+            const send = async (txt = input) => {
+                if(!txt.trim() || thinking) return;
+                setInput("");
+                const newHistory = [...messages, {role:"user", text:txt}];
+                setMessages(newHistory);
+                setThinking(true);
+                
+                // Heuristic Stack Detection (Visual Flair)
+                if (txt.includes("tweet") || txt.includes("audience")) setActiveStack("CREATOR");
+                else if (txt.includes("code") || txt.includes("system")) setActiveStack("BUILDER");
+                
+                const reply = await callAI(txt, messages);
+                setMessages(prev => [...prev, {role:"assistant", text:reply}]);
+                setThinking(false);
+            };
+
+            const rituals = [
+                { id: "morning", label: "CREATOR MORNING", cmd: "creator morning" },
+                { id: "forge", label: "VIRAL FORGE", cmd: "forge 10 hooks about..." },
+                { id: "profile", label: "CHAR. MIRROR", cmd: "show my character" },
+                { id: "snap", label: "SNAPSHOT", cmd: "/snapshot" },
+                { id: "prune", label: "PRUNE SYSTEM", cmd: "prune" },
+            ];
+
+            return (
+                <div className="flex h-full w-full overflow-hidden">
+                    
+                    {/* LEFT SIDEBAR: MACRO DECK */}
+                    <aside className="w-64 flex-none border-r border-cyan-900/30 bg-black/40 flex flex-col hidden md:flex z-10">
+                        <div className="p-6 border-b border-cyan-900/30">
+                            <h1 className="text-3xl font-bold tracking-tighter text-cyan-400">NEXUS</h1>
+                            <div className="flex items-center gap-2 mt-2">
+                                <div className={`w-2 h-2 rounded-full ${thinking ? 'bg-yellow-400 animate-ping' : 'bg-green-500'}`}></div>
+                                <span className="text-xs font-mono text-cyan-700">{thinking ? "PROCESSING" : "ONLINE"}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-8">
+                            {/* Stacks Visualizer */}
+                            <div>
+                                <h3 className="text-xs font-mono text-cyan-800 mb-3 uppercase tracking-widest">Active Stack</h3>
+                                <div className="border border-cyan-900/50 rounded bg-cyan-900/10 p-3">
+                                    <div className="text-xl font-bold text-cyan-300 text-center tracking-widest">{activeStack}</div>
+                                </div>
+                            </div>
+
+                            {/* Rituals */}
+                            <div>
+                                <h3 className="text-xs font-mono text-cyan-800 mb-3 uppercase tracking-widest">Ritual Deck</h3>
+                                <div className="space-y-2">
+                                    {rituals.map(r => (
+                                        <button key={r.id} onClick={() => { if(r.cmd.includes("...")) setInput(r.cmd); else send(r.cmd); }} 
+                                            className="w-full text-left px-4 py-3 rounded border border-cyan-900/40 hover:bg-cyan-900/20 hover:border-cyan-500 hover:text-cyan-200 transition-all text-sm font-mono group">
+                                            <span className="text-cyan-600 group-hover:text-cyan-400 mr-2">::</span> {r.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-cyan-900/30 space-y-2">
+                             <button onClick={() => setShowSettings(true)} className="w-full py-2 text-xs font-mono text-cyan-700 hover:text-cyan-400 border border-transparent hover:border-cyan-900 rounded">SETTINGS</button>
+                             <button onClick={onLogout} className="w-full py-2 text-xs font-mono text-red-900 hover:text-red-500 hover:bg-red-900/10 rounded">DISCONNECT</button>
+                        </div>
+                    </aside>
+
+                    {/* CENTER STAGE: CHAT & INPUT */}
+                    <main className="flex-1 flex flex-col relative bg-gradient-to-b from-gray-900 via-black to-black">
+                        
+                        {/* Messages Area - SCROLLS INDEPENDENTLY */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" ref={scrollRef}>
+                            {messages.length === 0 && (
+                                <div className="h-full flex flex-col items-center justify-center opacity-30 select-none">
+                                    <div className="text-6xl font-bold text-cyan-900 mb-4">NEXUS OS</div>
+                                    <div className="text-cyan-800 font-mono">AWAITING INPUT</div>
+                                </div>
+                            )}
+                            
+                            <div className="max-w-3xl mx-auto space-y-6 pb-4">
+                                {messages.map((m, i) => (
+                                    <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                                        <div className={`max-w-[85%] p-5 rounded-lg border ${
+                                            m.role === "user" 
+                                            ? "bg-cyan-950/30 border-cyan-800 text-cyan-100" 
+                                            : "bg-black/60 border-cyan-900/60 text-gray-300 shadow-[0_0_15px_rgba(6,182,212,0.05)]"
+                                        }`}>
+                                            {m.role === "assistant" && <div className="text-[10px] font-mono text-cyan-800 mb-2 uppercase tracking-wider">Nexus OS</div>}
+                                            <div className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">{m.text}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {thinking && (
+                                    <div className="flex justify-start">
+                                        <div className="px-4 py-2 bg-black border border-cyan-900/50 rounded text-cyan-500 font-mono text-xs animate-pulse">
+                                            > GENERATING RESPONSE...
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Input Deck - ANCHORED TO BOTTOM */}
+                        <div className="flex-none p-4 md:p-6 border-t border-cyan-900/30 glass-input z-20">
+                            <div className="max-w-3xl mx-auto relative">
+                                <input 
+                                    type="text" 
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+                                    placeholder="Enter command or query..."
+                                    autoComplete="off"
+                                    className="w-full bg-black/50 border border-cyan-800 text-cyan-100 p-4 rounded-lg focus:border-cyan-400 focus:ring-1 focus:ring-cyan-500/20 outline-none transition-all font-mono text-lg shadow-inner placeholder-cyan-900"
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
+                                    <button onClick={() => send()} disabled={!input || thinking} className="text-cyan-700 hover:text-cyan-400 disabled:opacity-50 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </main>
+
+                    {showSettings && <Settings onClose={() => setShowSettings(false)} />}
+                </div>
+            );
+        };
+
+        // ==================== UI: LOGIN ====================
+        const Login = ({onLogin}) => {
+            const [user, setUser] = useState("");
+            const [pass, setPass] = useState("");
+            const [msg, setMsg] = useState("");
+            const [mode, setMode] = useState("login");
+
+            const go = async () => {
+                if(!user || !pass) return setMsg("Credentials Missing");
+                const existing = Auth.find(user);
+                
+                try {
+                    if(mode === "login") {
+                        if(!existing) throw new Error("User not found");
+                        const key = await deriveKey(pass, existing.salt);
+                        await dec(existing.verifier, key);
+                        window.KEY = key; window.USER = user;
+                        onLogin();
+                    } else {
+                        if(existing) throw new Error("User exists");
+                        const salt = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');
+                        const key = await deriveKey(pass, salt);
+                        const verifier = await enc("VALID", key);
+                        Auth.add(user, salt, verifier);
+                        window.KEY = key; window.USER = user;
+                        onLogin();
+                    }
+                } catch(e) { setMsg(e.message || "Access Denied"); }
+            };
+
+            return (
+                <div className="flex h-full items-center justify-center p-4 relative z-10">
+                    <div className="glass-panel p-10 rounded-2xl w-full max-w-lg text-center shadow-[0_0_100px_rgba(6,182,212,0.15)] border-2 border-cyan-900/50">
+                        <h1 className="text-6xl font-bold text-cyan-400 mb-2 tracking-tighter">NEXUS</h1>
+                        <p className="text-cyan-700 font-mono mb-10 tracking-[0.3em] text-sm">OPERATING SYSTEM</p>
+                        <input value={user} onChange={e=>setUser(e.target.value)} placeholder="IDENTITY" className="w-full bg-black border border-cyan-900 p-4 mb-4 rounded text-center text-xl focus:border-cyan-500 outline-none transition-all" />
+                        <input type="password" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} placeholder="ACCESS KEY" className="w-full bg-black border border-cyan-900 p-4 mb-6 rounded text-center text-xl focus:border-cyan-500 outline-none transition-all" />
+                        <div className="text-red-500 font-mono text-sm h-5 mb-6">{msg}</div>
+                        <button onClick={go} className="w-full bg-cyan-700 hover:bg-cyan-500 text-white font-bold py-4 rounded text-xl transition-all shadow-lg shadow-cyan-900/20">{mode==="login"?"INITIALIZE":"NEW CONSTRUCT"}</button>
+                        <div className="mt-6 text-cyan-800 hover:text-cyan-500 cursor-pointer text-sm font-mono" onClick={()=>setMode(mode==="login"?"signup":"login")}>{mode==="login"?"[ CREATE VAULT ]":"[ BACK TO LOGIN ]"}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            return user ? <Cockpit user={user} onLogout={()=>setUser(null)} /> : <Login onLogin={()=>setUser(window.USER)} />;
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
