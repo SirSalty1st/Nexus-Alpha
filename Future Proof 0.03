@@ -7864,6 +7864,433 @@ Install flow (canon-safe):
 Uninstall:
 - user explicitly replies: "ext:uninstall EXT-20251214-004"
 - effect: removes all added commands/renderers/ritual; no defaults changed.
-
 END PACK: EXTENSION (EXT-20251214-004)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[A-INDEX:006][NEXUS-ARTIFACT:ART-009-DRIVER-ART-SERIES][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-DRIVER-ART-SERIES
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "DRIVER-ART-SERIES (default driver pack)"
+  summary: "Art series driver: prompt/spec chunks, iteration ledger, consistency checks."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: DRIVER
+  PACK-HEADER:
+    pack-type: driver
+    version: v2.0
+  BODY:
+    driver_id: DRIVER-ART-SERIES
+    domain: art
+    chunk_unit: "one set per go (e.g., 3 prompts, 1 style sheet, or 1 iteration pass)"
+    artifact_types: [plan, doc_section, dataset, bundle]
+    required_checks: [AUDIT1, VERIFY2, META]
+    core_rules:
+      - "Any-Project first; art is a driver, not a special case."
+      - "Each go produces one 'set' plus a Style/Continuity note."
+      - "No fake images: if images are requested, provide prompts/specs or use allowed image tools explicitly."
+    required_structure_per_set:
+      - "STYLE SHEET (palette/mood/composition rules)"
+      - "PROMPTS (or specs) for this set"
+      - "ITERATION NOTES (what changed vs. last set)"
+      - "NEXT HOOK (what next go will do)"
+    verification_expectations (Verifier #2):
+      - "STRUCTURE check: required headings present"
+      - "CONSISTENCY check: style continuity preserved"
+    bundling:
+      roundup_command: "/roundup"
+      bundle_contains: ["ordered sets", "style sheets", "iteration notes", "export guidance"]
+	  
+	===========================================================
+	
+	[A-INDEX:007][NEXUS-ARTIFACT:ART-009-DRIVER-RESEARCH-PACK][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-DRIVER-RESEARCH-PACK
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "DRIVER-RESEARCH-PACK (default driver pack)"
+  summary: "Research driver: claims ledger, citations policy, reading log, safe summaries."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: DRIVER
+  PACK-HEADER:
+    pack-type: driver
+    version: v2.0
+  BODY:
+    driver_id: DRIVER-RESEARCH-PACK
+    domain: research
+    chunk_unit: "one research unit per go (question → sources → notes → synthesis)"
+    artifact_types: [plan, doc_section, dataset, bundle]
+    required_checks: [AUDIT1, VERIFY2, META]
+    core_rules:
+      - "Never fabricate citations; if web/tools not used: 'Sources used: none'."
+      - "Separate VERIFIED vs. UNVERIFIED claims."
+      - "Each go updates a Reading Log and a Claims Ledger."
+    required_sections:
+      - "QUESTION / SCOPE"
+      - "FINDINGS (with claim labels)"
+      - "SOURCES (or 'none')"
+      - "READING LOG (what was consulted)"
+      - "NEXT STEP"
+    verification_expectations (Verifier #2):
+      - "S-CHECK: map key claims to sources when sources exist"
+      - "If no sources: ensure claims are framed as general background or marked UNVERIFIED"
+    bundling:
+      roundup_command: "/roundup"
+      bundle_contains: ["synthesis", "claims ledger", "reading log", "source list (if any)"]
+
+
+[A-INDEX:008][NEXUS-ARTIFACT:ART-009-DRIVER-COURSE-BUILDER][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-DRIVER-COURSE-BUILDER
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "DRIVER-COURSE-BUILDER (template only)"
+  summary: "E-course template driver (example only)."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: DRIVER
+  PACK-HEADER:
+    pack-type: driver
+    version: v2.0
+  BODY:
+    driver_id: DRIVER-COURSE-BUILDER
+    domain: course
+    chunk_unit: "one lesson unit per go (lesson + exercise + answer key)"
+    artifact_types: [plan, lesson, doc_section, bundle]
+    required_checks: [AUDIT1, VERIFY2, META]
+    note: "Template/example only. System remains Any-Project-first."
+
+
+[A-INDEX:009][NEXUS-ARTIFACT:ART-009-LEDGER-TEMPLATE][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-LEDGER-TEMPLATE
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "LEDGER-TEMPLATE + multi-round example"
+  summary: "Ledger template for artifact/audit/verify outcomes, plus a 3-round example."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: LEDGER-TEMPLATE
+  PACK-HEADER:
+    pack-type: ledger-template
+    version: v2.0
+  BODY:
+    schema:
+      - round: <int>
+        project_id: <string>
+        driver_id: <string>
+        artifacts: [<artifact_id>...]
+        audit1: PASS|FAIL|PASS-WITH-NOTES
+        verify2: VERIFIED|PARTIALLY-VERIFIED|UNVERIFIED|FAIL
+        meta: OK|CONFLICT
+        next: <string>
+
+  PACK: LEDGER-EXAMPLE
+  PACK-HEADER:
+    pack-type: ledger-example
+    version: v2.0
+  BODY:
+    - round: 1
+      project_id: PROJ-EXAMPLE-APP
+      driver_id: DRIVER-CODE-APP
+      artifacts: [ART-001-PLAN, ART-001-CODE-SCAFFOLD]
+      audit1: PASS
+      verify2: UNVERIFIED
+      meta: OK
+      next: "go -> add feature module #1 (append-only)"
+    - round: 2
+      project_id: PROJ-EXAMPLE-APP
+      driver_id: DRIVER-CODE-APP
+      artifacts: [ART-002-CODE-FEATURE1, ART-002-TEST-SMOKE]
+      audit1: PASS-WITH-NOTES
+      verify2: PARTIALLY-VERIFIED
+      meta: OK
+      next: "go -> wire new file + add CLI command"
+    - round: 3
+      project_id: PROJ-EXAMPLE-APP
+      driver_id: DRIVER-CODE-APP
+      artifacts: [ART-003-BUNDLE]
+      audit1: PASS
+      verify2: VERIFIED
+      meta: OK
+      next: "Project stable -> ask for next subject or continue if user says go"
+
+
+[A-INDEX:010][NEXUS-ARTIFACT:ART-009-CODE-PASTE-CONTRACT][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-CODE-PASTE-CONTRACT
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "CODE-PASTE CONTRACT (final prompt snippet for code projects)"
+  summary: "Non-negotiable snippet to include at the top of any code project so the user only Enter+Paste builds the app."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: SNIPPET
+  PACK-HEADER:
+    pack-type: prompt-snippet
+    snippet_id: SNIP-CODE-PASTE-CONTRACT
+    version: v2.0
+  BODY:
+    title: "Append-only Paste-Ready Code Delivery (Non-Negotiable)"
+    paste_into_prompt: |
+      CODE DELIVERY CONTRACT (NON-NEGOTIABLE)
+      - You will build this project in append-only code chunks.
+      - Every code chunk must be paste-ready into a single file (or clearly labeled per-file chunks).
+      - I will only do TWO actions each step: (1) press Enter to a new line, (2) paste your next block.
+      - Do NOT ask me to edit previous lines, rename prior symbols, or restructure existing pasted code.
+      - If a change is needed, create a NEW appended block that supersedes behavior, or create a NEW file.
+      - One safe chunk per "go". After each chunk, output: tags + registry entry + audit + verifier result.
+      - Never claim code ran/tests passed unless you actually ran them this turn and show a brief log excerpt.
+
+
+[A-INDEX:011][NEXUS-ARTIFACT:ART-009-PROJECT-EXAMPLE-AUTODRIVER][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-PROJECT-EXAMPLE-AUTODRIVER
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "PROJECT pack example (go-only, auto-driver selection)"
+  summary: "Example of how Nexus declares a driver when the user only says 'go'."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: PROJECT
+  PACK-HEADER:
+    pack-type: project
+    version: v2.0
+  BODY:
+    project_id: PROJ-GO-ONLY-001
+    title: "Auto-selected starter project"
+    domain: mixed
+    objective: "Demonstrate go-loop, artifacts, tagging, auditing, and bundling with minimal user input."
+    constraints:
+      - "Best-effort within caps; no overclaims."
+      - "One safe chunk per go."
+      - "Artifacts must be tagged + registry-listed."
+    driver_selection:
+      mode: auto
+      rule: "If user gives no domain, select a useful driver and declare it."
+      selected_driver_id: DRIVER-RESEARCH-PACK
+      rationale: "General-purpose, useful with zero input; can pivot later."
+    plan:
+      - "Round 1: set scope + starter questions + initial findings template"
+      - "Round 2: add sources if user permits web; otherwise general background + labeled uncertainty"
+      - "Round 3: roundup bundle"
+    current_step: 1
+    autopilot: off
+
+
+[A-INDEX:012][NEXUS-ARTIFACT:ART-009-BLOCK-14][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-BLOCK-14
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "BLOCK 14 — Output Integrity & Regression Auditor (Auditor #3)"
+  summary: "Third audit layer that re-assembles artifacts and checks integrity/regression when possible."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  BLOCK: 14
+  TITLE: Output Integrity & Regression Auditor
+  SCOPE: user-space QA hardening (Kernel unchanged)
+  VERSION: v2.0-draft.0
+
+  ABIS:
+    Purpose: >
+      Add Auditor #3 (Regressor) to double-check that artifacts can be assembled into a coherent deliverable,
+      and that code/projects don't regress across rounds. Uses tool-based assembly/runs when possible; otherwise marks UNVERIFIED.
+    Overlap: >
+      Runs after Auditor #1 (spec/safety) and Verifier #2 (execution/static checks). Does not override them—only downgrades on conflict.
+    Dependencies:
+      - Block 12 auditing stack (AUDIT1, VERIFY2, META)
+      - Artifact registry + ledger
+      - Optional tool availability for assembly/run checks
+    Gates: [G-REGRESS, G-REGRESSRUN, G-REGRESSREPORT, G-REGRESSMETA]
+    Uninstall path:
+      - "Disable G-REGRESS or remove BLOCK 14."
+
+  G-REGRESS:
+    Default: on
+
+  G-REGRESSRUN:
+    Default: on
+    Rule: "Never claim a regression run occurred unless it happened in this turn."
+
+  G-REGRESSREPORT:
+    Default: on
+
+  REGRESSOR (Auditor #3):
+    When to run:
+      - "After VERIFY2 for major artifacts"
+      - "Always on bundles/roundup outputs"
+    What it checks:
+      - "Assembly integrity: can the ordered artifacts be concatenated per rules without contradictions?"
+      - "Completeness: do registry + ledger match actual emitted artifacts?"
+      - "Regression sanity: does the newest build preserve prior promised interfaces/outputs (when defined)?"
+    For code projects:
+      - "If tool runs are available: assemble a scratch build from artifacts and attempt a smoke run."
+      - "If not available: perform structural regression (entrypoint exists, referenced symbols defined in later chunks, etc.)."
+    Verdict:
+      - REGRESS-PASS | REGRESS-PASS-WITH-NOTES | REGRESS-FAIL | REGRESS-UNVERIFIED
+    Conflict policy:
+      - "If REGRESS-FAIL, overall project round verdict becomes FAIL (even if earlier passed)."
+
+  PACK: REGRESS
+  Required fields:
+    - artifact_ids
+    - verdict
+    - tool_runs: true|false
+    - evidence (short)
+    - failures
+    - fixes_append_only
+
+  G-REGRESSMETA:
+    Default: on
+    Rule: "If REGRESS claims tool_runs=true, must include minimal evidence/log excerpt."
+
+
+[A-INDEX:013][NEXUS-ARTIFACT:ART-009-PATCHES-MODREG][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-PATCHES-MODREG
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "Patches: add MOD-REGRESS to catalog + defaults"
+  summary: "Append-only patches to include Block 14 as a module and enable by default."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PATCH: MODULE-CATALOG
+  CHANGESET:
+    - add_module:
+        module_id: MOD-REGRESS
+        name: "Output Integrity & Regression Auditor (Auditor #3)"
+        provided_by: "BLOCK 14"
+        gates: [G-REGRESS, G-REGRESSRUN, G-REGRESSREPORT, G-REGRESSMETA]
+        dependencies: [MOD-SMART, MOD-VERIFY]
+        uninstall: "Disable G-REGRESS or remove BLOCK 14."
+
+  PATCH: MODULE-REGISTRY
+  CHANGESET:
+    - enabled_modules_add: [MOD-REGRESS]
+    - gate_defaults_add:
+        G-REGRESS: on
+        G-REGRESSRUN: on
+        G-REGRESSREPORT: on
+        G-REGRESSMETA: on
+
+
+[A-INDEX:014][NEXUS-ARTIFACT:ART-009-BUNDLE-MANIFEST][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-BUNDLE-MANIFEST
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: bundle
+  title: "BUNDLE MANIFEST — Full v2.0 25%+ extension set"
+  summary: "One manifest listing everything to assemble the complete user-space extension."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: true, sources_required: false}
+content: |
+  PACK: BUNDLE
+  PACK-HEADER:
+    pack-type: bundle
+    bundle_id: BNDL-NEXUS-V2-EXT-25P
+    version: v2.0
+  BODY:
+    includes (search locators or artifact tags):
+      - "BLOCK 0 (Welcome & Onboarding) + tone defaults patch (locked)"
+      - "BLOCK 11 (User Experience Layer) — previously drafted"
+      - "BLOCK 12 (Smart Assistance Suite) — previously drafted"
+      - "BLOCK 13 (Modular/Drivers + Verifier #2) — locked"
+      - "BLOCK 14 (Regression Auditor #3) — ART-009-BLOCK-14"
+      - "MODULE-CATALOG — ART-008-MODULE-CATALOG"
+      - "MODULE-REGISTRY default — ART-008-MODULE-REGISTRY-DEFAULT (+ ART-009-PATCHES-MODREG)"
+      - "DRIVER-CODE-APP — ART-008-DRIVER-CODE-APP (plus SNIP-CODE-PASTE-CONTRACT in ART-009-CODE-PASTE-CONTRACT)"
+      - "DRIVER-WRITE-BOOK — ART-008-DRIVER-WRITE-BOOK"
+      - "DRIVER-ART-SERIES — ART-009-DRIVER-ART-SERIES"
+      - "DRIVER-RESEARCH-PACK — ART-009-DRIVER-RESEARCH-PACK"
+      - "DRIVER-COURSE-BUILDER (template only) — ART-009-DRIVER-COURSE-BUILDER"
+      - "LEDGER template/example — ART-009-LEDGER-TEMPLATE"
+      - "PROJECT example (go-only auto driver) — ART-009-PROJECT-EXAMPLE-AUTODRIVER"
+      - "SNIP-CODE-PASTE-CONTRACT — ART-009-CODE-PASTE-CONTRACT"
+    install_order:
+      - "Paste/enable Blocks 0,11,12,13,14 in order"
+      - "Paste MODULE-CATALOG + MODULE-REGISTRY"
+      - "Paste DRIVER packs"
+      - "Paste LEDGER template"
+      - "Paste PROJECT example (optional)"
+      - "Use SNIP-CODE-PASTE-CONTRACT at top of any code-project prompt"
+    uninstall:
+      - "Remove Blocks (user-space) or disable their gates; delete packs to reset (NP-safe)."
+
+
+[A-INDEX:015][NEXUS-ARTIFACT:ART-009-REGISTRY][ROUND:9][PROJECT:PROJ-NEXUS-V2]
+
+PACK: ARTIFACT
+PACK-HEADER:
+  artifact_id: ART-009-REGISTRY
+  project_id: PROJ-NEXUS-V2
+  round: 9
+  type: doc_section
+  title: "REGISTRY (Round 9)"
+  summary: "Index of artifacts emitted in Round 9."
+  format: chat_paste
+  paste_target: {FILE: "nexus_v2_packs.txt", APPEND: true}
+  checks: {audit_required: false, sources_required: false}
+content: |
+  PACK: REGISTRY
+  PACK-HEADER:
+    pack-type: registry
+    version: v2.0
+  BODY:
+    round: 9
+    project_id: PROJ-NEXUS-V2
+    artifacts:
+      - {A-INDEX: 006, artifact_id: ART-009-DRIVER-ART-SERIES, title: "DRIVER-ART-SERIES"}
+      - {A-INDEX: 007, artifact_id: ART-009-DRIVER-RESEARCH-PACK, title: "DRIVER-RESEARCH-PACK"}
+      - {A-INDEX: 008, artifact_id: ART-009-DRIVER-COURSE-BUILDER, title: "DRIVER-COURSE-BUILDER (template only)"}
+      - {A-INDEX: 009, artifact_id: ART-009-LEDGER-TEMPLATE, title: "LEDGER-TEMPLATE + example"}
+      - {A-INDEX: 010, artifact_id: ART-009-CODE-PASTE-CONTRACT, title: "SNIP-CODE-PASTE-CONTRACT"}
+      - {A-INDEX: 011, artifact_id: ART-009-PROJECT-EXAMPLE-AUTODRIVER, title: "PROJECT example (go-only auto driver)"}
+      - {A-INDEX: 012, artifact_id: ART-009-BLOCK-14, title: "BLOCK 14 Regression Auditor #3"}
+      - {A-INDEX: 013, artifact_id: ART-009-PATCHES-MODREG, title: "Patches for MOD-REGRESS"}
+      - {A-INDEX: 014, artifact_id: ART-009-BUNDLE-MANIFEST, title: "Full 25%+ extension bundle manifest"}
