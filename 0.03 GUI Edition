@@ -2,644 +2,3768 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>NEXUS OS | v7.1 Final</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS TERMINAL v0.10</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;700&family=Inter:wght@300;400;600&display=swap"
-    rel="stylesheet"
-  />
-
-  <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.25.5/babel.min.js"></script>
+  <!-- Markdown + Highlighting + Sanitizer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     :root {
-      --bg: #020617;
-      --glass: rgba(15, 23, 42, 0.85);
-      --gold: #ffd700;
-      --gold-dark: #d4af37;
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a25;
+      --bg-hover: #252535;
+      --text-primary: #e0e0e0;
+      --text-secondary: #888;
+      --text-muted: #555;
+      --accent: #00d4ff;
+      --accent-dim: #00a0cc;
+      --accent-glow: rgba(0, 212, 255, 0.3);
+      --success: #00ff88;
+      --warning: #ffaa00;
+      --error: #ff4466;
+      --border: #2a2a3a;
+      --user-bg: #1a2a35;
+      --assistant-bg: #151520;
+      --thinking-bg: #1a1520;
+      --panel-bg: #0f0f16;
     }
 
     body {
-      margin: 0;
-      font-family: "Inter", system-ui, sans-serif;
-      background: #020617; /* Fallback */
-      background: radial-gradient(circle at top, #020617 0, #000 55%, #000 100%);
-      color: #e5e7eb;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       height: 100vh;
-      width: 100vw;
-      overflow: hidden; /* CRITICAL: Prevents full page scroll */
-    }
-
-    #root {
-      height: 100%;
-      width: 100%;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
-    /* Scrollbar Styling */
-    .custom-scroll::-webkit-scrollbar {
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .menu-toggle:hover { color: var(--accent); }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-spacer { flex: 1; }
+
+    /* Provider Indicator */
+    .provider-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      cursor: default;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .provider-indicator .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .provider-indicator.connected .dot { background: var(--success); }
+    .provider-indicator.error .dot { background: var(--error); }
+    .provider-indicator span { color: var(--text-secondary); }
+
+    /* Prompt Stack Indicator */
+    .prompt-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .prompt-indicator:hover { border-color: var(--accent); }
+    .prompt-indicator .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success);
+    }
+    .prompt-indicator.modified .dot { background: var(--warning); }
+    .prompt-indicator span { color: var(--text-secondary); }
+
+    /* Buttons */
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .settings-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .settings-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Main Layout */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s, transform 0.3s;
+      overflow: hidden;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+    .sidebar.collapsed { width: 0; border-right: none; }
+
+    .sidebar-content {
+      padding: 15px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .sidebar-section { display: flex; flex-direction: column; gap: 8px; }
+
+    .sidebar-section-header {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .sidebar-section-header:hover { color: var(--text-secondary); }
+
+    .sidebar-section-header .toggle-icon { font-size: 10px; transition: transform 0.2s; }
+    .sidebar-section-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+
+    .sidebar-section-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+      transition: max-height 0.3s;
+    }
+    .sidebar-section-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .field-row { display: flex; gap: 8px; }
+    .field-col { display: flex; flex-direction: column; gap: 5px; }
+
+    .field-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .select, .input {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .select:focus, .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .select option { background: var(--bg-secondary); }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Small pill buttons */
+    .pill-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill-btn {
+      padding: 6px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .pill-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .pill-btn.primary { background: var(--accent); color: var(--bg-primary); border-color: var(--accent); }
+    .pill-btn.primary:hover { background: var(--accent-dim); }
+
+    /* Command list */
+    .command-category { margin-bottom: 8px; }
+    .command-category-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .command-list { display: flex; flex-direction: column; gap: 2px; }
+
+    .command-item {
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      font-size: 11px;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .command-item:hover { background: var(--bg-hover); padding-left: 12px; }
+    .command-item .cmd-desc { color: var(--text-muted); font-size: 10px; margin-left: 6px; }
+
+    /* Session buttons */
+    .session-btn {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .session-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+    .session-btn.danger:hover { border-color: var(--error); color: var(--error); }
+
+    /* Settings Panel (top dropdown) */
+    .settings-panel {
+      display: none;
+      padding: 15px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .settings-panel.visible { display: block; }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+    }
+    .setting-group { display: flex; flex-direction: column; gap: 5px; }
+    .setting-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+    .setting-input {
+      padding: 8px 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .setting-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+
+    /* Chat Area */
+    .chat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 85%;
+      animation: fadeIn 0.22s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: flex-start; }
+    .message.system { align-self: flex-start; }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      user-select: none;
+    }
+
+    .message.user .message-header { justify-content: flex-end; color: var(--accent); }
+    .message.assistant .message-header { color: var(--text-muted); }
+    .message.system .message-header { color: var(--warning); }
+
+    .message-content {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+      border: 1px solid var(--border);
+    }
+
+    .message.user .message-content { background: var(--user-bg); }
+    .message.assistant .message-content { background: var(--assistant-bg); }
+    .message.system .message-content { background: rgba(255,170,0,0.08); border-color: rgba(255,170,0,0.3); }
+
+    /* Thinking Block */
+    .thinking-block {
+      background: var(--thinking-bg);
+      border: 1px solid #2a1a3a;
+      border-radius: 6px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .thinking-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(100, 50, 150, 0.2);
+      cursor: pointer;
+      font-size: 11px;
+      color: #aa88cc;
+      user-select: none;
+    }
+    .thinking-header:hover { background: rgba(100, 50, 150, 0.3); }
+    .thinking-content {
+      padding: 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: none;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .thinking-content.expanded { display: block; }
+
+    /* Markdown Styles */
+    .message-content h1, .message-content h2, .message-content h3 {
+      margin: 15px 0 10px 0;
+      color: var(--accent);
+    }
+    .message-content h1 { font-size: 1.4em; }
+    .message-content h2 { font-size: 1.2em; }
+    .message-content h3 { font-size: 1.1em; }
+
+    .message-content p { margin: 8px 0; }
+    .message-content ul, .message-content ol { margin: 8px 0; padding-left: 20px; }
+    .message-content li { margin: 4px 0; }
+
+    .message-content code {
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    .message-content pre {
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      margin: 10px 0;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .code-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--bg-hover);
+      font-size: 11px;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 10px;
+      font-family: inherit;
+      user-select: none;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .message-content pre code {
+      display: block;
+      padding: 12px;
+      background: none;
+      overflow-x: auto;
+    }
+
+    .message-content blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 10px 0;
+      padding-left: 15px;
+      color: var(--text-secondary);
+    }
+
+    .message-content table { border-collapse: collapse; margin: 10px 0; width: 100%; }
+    .message-content th, .message-content td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .message-content th { background: var(--bg-tertiary); }
+
+    /* Input Area */
+    .input-container {
+      padding: 15px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-wrapper { display: flex; gap: 10px; align-items: flex-end; }
+
+    .message-input {
+      flex: 1;
+      padding: 12px 15px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      min-height: 46px;
+      max-height: 200px;
+      line-height: 1.5;
+    }
+    .message-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    .message-input::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      padding: 12px 18px;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: var(--bg-primary);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      user-select: none;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      min-width: 108px;
+    }
+    .send-btn:hover { background: var(--accent-dim); }
+    .send-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+    .stop-btn {
+      padding: 12px 14px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      user-select: none;
+      min-width: 78px;
+    }
+    .stop-btn:hover { border-color: var(--error); color: var(--error); }
+    .stop-btn:disabled { color: var(--text-muted); border-color: var(--border); cursor: not-allowed; }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0 0 0;
+      font-size: 10px;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .status-bar-left { display: flex; gap: 15px; flex-wrap: wrap; }
+
+    .status-bar-item { display: flex; align-items: center; gap: 4px; }
+    .status-bar-item .label { color: var(--text-muted); }
+    .status-bar-item .value { color: var(--text-secondary); }
+
+    /* Loading Animation */
+    .loading-dots { display: inline-flex; gap: 4px; }
+    .loading-dots span {
       width: 6px;
       height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 1.4s ease-in-out infinite;
     }
-    .custom-scroll::-webkit-scrollbar-track {
-      background: transparent;
+    .loading-dots span:nth-child(1) { animation-delay: 0s; }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
     }
-    .custom-scroll::-webkit-scrollbar-thumb {
-      background-color: rgba(34, 211, 238, 0.2);
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.82);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 980px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 5px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--error); }
+
+    .modal-body {
+      flex: 1;
+      padding: 16px 20px 20px 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 7px 10px;
       border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
     }
-    .custom-scroll::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(34, 211, 238, 0.4);
+    .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .tab-btn.active { background: rgba(0,212,255,0.15); border-color: var(--accent); color: var(--text-primary); }
+
+    .panel {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      padding: 14px;
+      display: none;
+    }
+    .panel.visible { display: block; }
+
+    .panel h3 {
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      user-select: none;
     }
 
-    /* Glass Panels */
-    .glass-panel {
-      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.04), transparent 45%),
-        linear-gradient(to bottom right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      box-shadow: 0 0 40px rgba(8, 47, 73, 0.3), 0 0 0 1px rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(20px);
+    .panel .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .panel .col { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 6px; }
+    .panel .small { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+    .kv {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+    }
+    .kv .k { font-size: 10px; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase; }
+    .kv .v { font-size: 12px; color: var(--text-secondary); word-break: break-word; }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .list-item {
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+    .list-item:hover { border-color: rgba(0,212,255,0.25); }
+    .list-item .title { color: var(--text-primary); font-size: 12px; }
+    .list-item .meta { color: var(--text-muted); font-size: 10px; margin-top: 4px; }
+    .list-item .actions { display: flex; gap: 8px; }
+    .tiny-btn {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .tiny-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .tiny-btn.danger:hover { border-color: var(--error); color: var(--error); }
+
+    /* Welcome Screen */
+    .welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 40px;
+      gap: 12px;
     }
 
-    .glass-input {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: #fff;
-    }
-    .glass-input:focus {
-      border-color: #22d3ee;
-      outline: none;
-      box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3);
+    .welcome-logo {
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 5px;
+      user-select: none;
     }
 
-    /* Animations */
-    .message-fade {
-      animation: messageIn 0.2s ease-out forwards;
-    }
-    @keyframes messageIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+    .welcome-version { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; user-select: none; }
+
+    .welcome-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      line-height: 1.8;
     }
 
-    .typing-dots span {
-      animation: blink 1.4s infinite;
-      animation-fill-mode: both;
-    }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
-
-    /* Shimmer Effect */
-    .gold-shimmer {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold), var(--gold-dark));
-      background-size: 200% 200%;
-      animation: shimmer 3s linear infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    .api-key-form {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
     }
 
-    /* Typography */
-    .font-nexus { font-family: "Exo 2", sans-serif; }
-    .font-code { font-family: "JetBrains Mono", monospace; }
+    .api-key-input {
+      padding: 12px 15px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      text-align: center;
+    }
+    .api-key-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
 
-    /* Markdown-ish Styling */
-    .message-content h1, .message-content h2, .message-content h3 {
-      font-weight: 700; margin-top: 0.5em; margin-bottom: 0.2em; color: #e2e8f0;
+    .api-key-btn {
+      padding: 12px 24px;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: var(--bg-primary);
+      font-size: 12px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      user-select: none;
     }
-    .message-content ul, .message-content ol {
-      margin-left: 1.2em; list-style: disc; margin-bottom: 0.5em;
-    }
-    .message-content code {
-      background: rgba(0,0,0,0.3); padding: 0.1em 0.3em; border-radius: 4px; font-family: "JetBrains Mono", monospace; font-size: 0.9em; color: #a5f3fc;
-    }
-    .message-content p { margin-bottom: 0.5em; line-height: 1.5; }
-    .message-content strong { color: #fff; font-weight: 600; }
+    .api-key-btn:hover { background: var(--accent-dim); }
 
-    /* Matrix Rain Canvas */
-    #matrix-canvas {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; opacity: 0.05; z-index: 0;
+    .api-key-error { color: var(--error); font-size: 12px; margin-top: 2px; min-height: 16px; }
+
+    /* Hidden file input */
+    .hidden-input { display: none; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      right: 18px;
+      bottom: 92px;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-secondary);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      display: none;
+      max-width: 480px;
+      z-index: 20;
+      backdrop-filter: blur(6px);
     }
+    .toast.visible { display: block; animation: fadeIn 0.2s ease; }
+    .toast b { color: var(--text-primary); }
   </style>
 </head>
+
 <body>
-  <div id="root"></div>
+  <div class="header">
+    <button class="menu-toggle" id="menuToggle" title="Toggle sidebar">☰</button>
+    <div class="logo">NEXUS TERMINAL</div>
+    <div class="header-spacer"></div>
 
-  <script type="text/x-nexus-kernel">
-<<<===[NEXUS-OS-PROMPT-START]===>>>
+    <div class="provider-indicator" id="providerIndicator" title="Connection status">
+      <div class="dot"></div>
+      <span id="providerIndicatorText">Disconnected</span>
+    </div>
 
-NEXUS OS 0.02 LITE
+    <div class="prompt-indicator" id="promptIndicator" title="Prompt Stack (Kernel + Overlay)">
+      <div class="dot"></div>
+      <span id="promptIndicatorText">Kernel + Overlay</span>
+    </div>
 
-(Dec 2025 – ~6.8k tokens instead of ~19k)
+    <button class="icon-btn" id="powerBtn" title="Power Mode Panels">⚡</button>
+    <button class="icon-btn" id="helpBtn" title="Quick Reference">?</button>
+    <button class="settings-toggle" id="settingsToggle" title="Top settings">
+      <span>⚙</span><span>Settings</span>
+    </button>
+  </div>
 
-Same power. Zero bloat. Nothing that actually matters was cut.
+  <!-- Top Settings Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-grid">
+      <div class="setting-group">
+        <label class="setting-label">API Key (memory by default)</label>
+        <input type="password" class="setting-input" id="apiKeyInput" placeholder="Paste key…">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Provider</label>
+        <select class="setting-input" id="providerSelect">
+          <option value="anthropic">Anthropic (Tier-1)</option>
+          <option value="groq">Groq (Tier-1)</option>
+          <option value="xai">xAI (Tier-1)</option>
+          <option value="openrouter">OpenRouter (Tier-1)</option>
+          <option value="openai">OpenAI (Tier-2 best-effort)</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Model</label>
+        <input class="setting-input" id="modelInput" list="modelDatalist" placeholder="Model id…">
+        <datalist id="modelDatalist"></datalist>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Temperature</label>
+        <input type="number" class="setting-input" id="temperatureInput" min="0" max="2" step="0.1" value="1">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Max Tokens</label>
+        <input type="number" class="setting-input" id="maxTokensInput" min="16" max="128000" step="16" value="2048">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Thinking Budget (Anthropic)</label>
+        <input type="number" class="setting-input" id="thinkingBudgetInput" min="0" max="50000" step="500" value="10000">
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:space-between;">
+      <div class="hint">
+        No baked-in proxies. If a provider blocks browser calls (CORS), you’ll see an error — switch providers or use your own infrastructure (advanced override in Power › Inspector).
+      </div>
+      <div class="pill-row">
+        <button class="pill-btn primary" id="testConnectionBtn">Test Connection</button>
+        <button class="pill-btn" id="clearKeyBtn">Clear Key</button>
+      </div>
+    </div>
+  </div>
 
-────────────────────────────────────
-[0] QUICK-START (say any time, case-insensitive)
-creator morning • forge 30 hooks about X • plan my launch • redteam this • show my character • /snapshot • lifetime export • prune • reactivate idea: [paste]
-meta mode • meta mode: [brief] • clean meta mode • optimizer • accept optimizer 3 • skip optimizer • PDX on/off • deep • light • tone: os/nexus/mythic/war-room • help • voice on/off
-────────────────────────────────────
-[1] CORE IDENTITY (unchanged – this is the soul)
-You are Nexus OS Lite – a single-window creative operating system.
-You are NOT a person, daemon, or swarm.
-You are a re-applied rule set + PBX router + packs.
-Focus: thinking, building, content, systems, strategy (especially X/Twitter).
-Hard no-go zones (no expert advice): medicine, mental health, law, finance, therapy. In those you only organise thoughts and point to professionals.
-────────────────────────────────────
-[2] NON-NEGOTIABLE SAFETY (identical, just shorter)
-
-    Radical Honesty (RH): never fake memory, tools, or certainty.
-    No Persistence (NP): only this visible chat + pasted packs count as memory.
-    No Background Autonomy (BA): nothing happens after my reply.
-    No expert advice in restricted domains.
-    If asked to break these → polite refusal + honest alternative.
-    ────────────────────────────────────
-    [3] RESPONSE CONTRACT (default MED depth)
-
-    Orientation (1 line): what I think you’re doing.
-    Structured Core (headings + bullets).
-    Mini-Log
-        Decisions made
-        Open questions
-        Suggested next moves (1–3)
-    Command hints (1 line)
-
-Depth overrides: “light” → concise, “deep” → full panels & options (next reply only).
-Micro-answers & fast drafts skip everything except the artefact.
-────────────────────────────────────
-[4] PBX – TASK ROUTER (exactly the same logic, 60 % shorter text)
-Every reply PBX silently picks:
-Stack(s) • Mode(s) • Depth • Tone • Tools needed
-
-Stacks (mixable):
-Creator • Builder • Life • Analyst • Engineer • Learner (same definitions, just no fluff)
-
-Modes (verbs):
-/idea • /plan • /research • /story • /ship • /implement • /debug • /reflect • /redteam • /snapshot • /impact (auto-triggered on persuasion/virality/scale)
-
-Multi-role panels allowed (Optimist/Skeptic/Ethics/etc.) → always end with Synthesis.
-────────────────────────────────────
-[5] RITUALS – ONLY THE HIGH-LEVERAGE ONES KEPT
-(Everything else can be built with normal commands)
-
-creator morning → exact same 5-step creative sprint
-forge [N] [artifact] about [topic] → batch hook generator with top picks
-show my character → 4-lens profile + signature + northstar
-/snapshot → Session or Project Pack (auto-triggered reminder after big work)
-lifetime export → full era archive
-prune & reactivate idea → same retirement/reactivation flow
-clean meta mode → define target before behavioural change
-meta mode → full focused evolution loop on a Meta Target Brief
-optimizer → spits 5 numbered IP-DRAFTs → “accept optimizer 3” installs only #3
-PDX on → one high-leverage IP candidate per non-micro reply (optional)
-────────────────────────────────────
-[6] PACKS & PERSISTENCE (core intact, trimmed wording)
-Types: OS Pack • Session Pack • Project Pack • Domain/Canon Pack • Archive Pack
-Rule: if user pastes a pack → acknowledge + use it this session only.
-You never secretly store anything. User must save externally.
-────────────────────────────────────
-[7] TOOLS & ENGINE AWARENESS (reality layer preserved)
-Use every tool the host actually gives you.
-Never claim tools you don’t have.
-When tools are used → mention briefly in reply or Mini-Log.
-Fall back to text reasoning and mark limitation if tool missing.
-────────────────────────────────────
-[8] ETHICS & IMPACT LAB (shortened but 100 % teeth)
-Triggers: scale persuasion, money, power, vulnerable groups, automation, outrage/deception.
-When triggered → run /impact mini-ritual (intent → 3-role panel → red lines → safer tweaks → visible [IMPACT DECISION] stamp).
-Hard refusals if only path is harmful.
-────────────────────────────────────
-[9] TONE LADDER & DEFAULTS
-tone: nexus (default) • os • mythic • war-room
-depth: MED default, LIGHT for content sprints, DEEP only on explicit request
-voice on/off supported
-────────────────────────────────────
-[10] BOOT
-You are now running Nexus OS Lite.
-All the original power (PBX, rituals, packs, meta mode, impact lab, honest persistence) is here.
-Zero filler, zero fake memory, zero background lies.
-
-Your next message → I will PBX-route and move fast.
-
-Type anything. Let’s build.
-<<<===[NEXUS-OS-PROMPT-END]===>>>
-  </script>
-
-  <script type="text/babel" data-presets="env,react">
-    const { useState, useEffect, useRef } = React;
-
-    // --- ICONS ---
-    const Icons = {
-      Nexus: (props) => (
-        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={props.className}>
-          <defs>
-            <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#22D3EE" stopOpacity="1" />
-              <stop offset="100%" stopColor="#0F172A" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <circle cx="32" cy="32" r="30" fill="url(#coreGlow)" opacity="0.2" />
-          <circle cx="32" cy="32" r="22" stroke="#38BDF8" strokeOpacity="0.55" strokeWidth="1.4" />
-          <circle cx="32" cy="32" r="6.5" fill="#22D3EE" />
-          <path d="M18 24C21 19 25.5 16.5 32 16.5C38.5 16.5 43 19 46 24" stroke="#7DD3FC" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M18 40C21 45 25.5 47.5 32 47.5C38.5 47.5 43 45 46 40" stroke="#22D3EE" strokeWidth="1.4" strokeLinecap="round" />
-          <circle cx="18" cy="24" r="2" fill="#22D3EE" />
-          <circle cx="46" cy="24" r="2" fill="#22D3EE" />
-          <circle cx="18" cy="40" r="2" fill="#22D3EE" />
-          <circle cx="46" cy="40" r="2" fill="#22D3EE" />
-        </svg>
-      ),
-      Send: (props) => (
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={props.className}>
-          <path d="M4.5 19.5L20.25 12L4.5 4.5L4.5 10.5L12.75 12L4.5 13.5L4.5 19.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      Refresh: (props) => (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
-           <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path>
-           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-        </svg>
-      ),
-      Settings: (props) => (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      )
-    };
-
-    // --- UTILS ---
-    const MatrixRain = () => {
-      const canvasRef = useRef(null);
-      useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        let width = (canvas.width = window.innerWidth);
-        let height = (canvas.height = window.innerHeight);
-        const chars = "01NEXUS";
-        const fontSize = 14;
-        const columns = Math.floor(width / fontSize);
-        const drops = new Array(columns).fill(1);
-
-        const draw = () => {
-          ctx.fillStyle = "rgba(2, 6, 23, 0.1)";
-          ctx.fillRect(0, 0, width, height);
-          ctx.fillStyle = "#0ea5e9"; // Sky blue
-          ctx.font = fontSize + "px monospace";
-          for (let i = 0; i < drops.length; i++) {
-            const text = chars[Math.floor(Math.random() * chars.length)];
-            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-            if (drops[i] * fontSize > height && Math.random() > 0.99) drops[i] = 0;
-            drops[i]++;
-          }
-        };
-        const interval = setInterval(draw, 50);
-        window.addEventListener("resize", () => {
-          width = canvas.width = window.innerWidth;
-          height = canvas.height = window.innerHeight;
-        });
-        return () => clearInterval(interval);
-      }, []);
-      return <canvas ref={canvasRef} id="matrix-canvas" />;
-    };
-
-    const getKernelPrompt = () => {
-      try {
-        const block = document.querySelector('script[type="text/x-nexus-kernel"]').textContent;
-        const start = "<<<===[NEXUS-OS-PROMPT-START]===>>>";
-        const end = "<<<===[NEXUS-OS-PROMPT-END]===>>>";
-        if (block.includes(start) && block.includes(end)) {
-            return block.split(start)[1].split(end)[0].trim();
-        }
-        return "You are Nexus OS. Assist the user.";
-      } catch (e) {
-        return "You are Nexus OS. Assist the user.";
-      }
-    };
-
-    const parseMarkdown = (text) => {
-      let html = text
-        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/^\- (.*$)/gm, '<ul><li>$1</li></ul>') // crude list
-        .replace(/<\/ul>\n<ul>/g, ''); // merge lists
-      
-      // Simple line break handling
-      html = html.split('\n').map(line => {
-        if(line.match(/<(h|ul|li)/)) return line;
-        return line ? `<p>${line}</p>` : '';
-      }).join('');
-      
-      return <div className="message-content text-sm md:text-base" dangerouslySetInnerHTML={{ __html: html }} />;
-    };
-
-    // --- MAIN COMPONENT (SECTION 2: THE APP) ---
-    function App() {
-      // State
-      const [keys, setKeys] = useState({ gemini: "", groq: "", openai: "", anthropic: "", xai: "" });
-      const [provider, setProvider] = useState("gemini");
-      const [useProxy, setUseProxy] = useState(false);
-      const [hasKey, setHasKey] = useState(false);
-      const [messages, setMessages] = useState([]);
-      const [input, setInput] = useState("");
-      const [isThinking, setIsThinking] = useState(false);
-      const [booted, setBooted] = useState(false);
-      const [showMatrix, setShowMatrix] = useState(true);
-
-      const messagesEndRef = useRef(null);
-
-      // Load Config
-      useEffect(() => {
-        const saved = localStorage.getItem("nexus-os-config-v7");
-        if (saved) {
-          const p = JSON.parse(saved);
-          setKeys(p.keys || keys);
-          setProvider(p.provider || "gemini");
-          setUseProxy(p.useProxy || false);
-        }
-      }, []);
-
-      // Save Config
-      useEffect(() => {
-        localStorage.setItem("nexus-os-config-v7", JSON.stringify({ keys, provider, useProxy }));
-      }, [keys, provider, useProxy]);
-
-      // Auto-scroll
-      useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, [messages, isThinking]);
-
-      // API Logic
-      const callAPI = async (prompt, history) => {
-        const SYSTEM = getKernelPrompt();
-        const proxy = useProxy ? "https://corsproxy.io/?" : "";
-        const key = keys[provider];
-
-        if (!key) throw new Error("Missing API Key");
-
-        let responseText = "";
-
-        // GEMINI
-        if (provider === "gemini") {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-          const contents = [
-            ...history.map(m => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.content }] })),
-            { role: "user", parts: [{ text: prompt }] }
-          ];
-          const res = await fetch(proxy + url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents, systemInstruction: { parts: [{ text: SYSTEM }] } })
-          });
-          const data = await res.json();
-          if (data.error) throw new Error(data.error.message);
-          responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-        }
-        
-        // GROQ / OPENAI / XAI (Similar structures)
-        else if (["groq", "openai", "xai"].includes(provider)) {
-          let url = "";
-          let model = "";
-          if (provider === "groq") { url = "https://api.groq.com/openai/v1/chat/completions"; model = "llama-3.3-70b-versatile"; }
-          if (provider === "openai") { url = "https://api.openai.com/v1/chat/completions"; model = "gpt-4o"; }
-          if (provider === "xai") { url = "https://api.x.ai/v1/chat/completions"; model = "grok-beta"; }
-
-          const res = await fetch(proxy + url, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model,
-              messages: [{ role: "system", content: SYSTEM }, ...history, { role: "user", content: prompt }]
-            })
-          });
-          const data = await res.json();
-          if (data.error) throw new Error(data.error.message);
-          responseText = data.choices?.[0]?.message?.content || "No response";
-        }
-
-        // ANTHROPIC
-        else if (provider === "anthropic") {
-          const url = "https://api.anthropic.com/v1/messages";
-          const res = await fetch(proxy + url, {
-            method: "POST",
-            headers: {
-              "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json",
-              "anthropic-dangerous-direct-browser-access": "true"
-            },
-            body: JSON.stringify({
-              model: "claude-3-5-sonnet-20241022", max_tokens: 4096, system: SYSTEM,
-              messages: [...history, { role: "user", content: prompt }]
-            })
-          });
-          const data = await res.json();
-          if (data.error) throw new Error(data.error.message);
-          responseText = data.content?.[0]?.text || "No response";
-        }
-
-        return responseText;
-      };
-
-      const handleBoot = async () => {
-        setIsThinking(true);
-        try {
-          const text = await callAPI("SYSTEM BOOT SEQUENCE INITIATED.", []);
-          setMessages([{ role: "assistant", content: text }]);
-          setBooted(true);
-        } catch (e) {
-          alert("Boot Failed: " + e.message + ". Check Keys/Proxy.");
-        } finally {
-          setIsThinking(false);
-        }
-      };
-
-      const handleSend = async (e) => {
-        e.preventDefault();
-        if (!input.trim() || isThinking) return;
-        const userMsg = { role: "user", content: input };
-        const newHistory = [...messages, userMsg];
-        setMessages(newHistory);
-        setInput("");
-        setIsThinking(true);
-        
-        try {
-          const response = await callAPI(input, messages); // pass old messages for history
-          setMessages([...newHistory, { role: "assistant", content: response }]);
-        } catch (err) {
-          setMessages([...newHistory, { role: "system", content: "Error: " + err.message }]);
-        } finally {
-          setIsThinking(false);
-        }
-      };
-
-      // --- LOGIN SCREEN (STATIC CENTERED) ---
-      if (!hasKey) {
-        return (
-          <div className="w-full h-full flex items-center justify-center p-4 relative overflow-hidden">
-            <MatrixRain />
-            <div className="glass-panel p-8 rounded-2xl w-full max-w-md relative z-10 animate-fade-in flex flex-col gap-6">
-              <div className="text-center">
-                <div className="inline-flex p-4 rounded-full bg-cyan-500/10 border border-cyan-500/30 mb-4 text-cyan-400">
-                  <Icons.Nexus className="w-10 h-10" />
-                </div>
-                <h1 className="font-nexus text-3xl font-bold tracking-widest text-white">NEXUS v7.1</h1>
-                <p className="font-code text-xs text-cyan-400/70 tracking-widest uppercase mt-1">One-Window Ops Shell</p>
-              </div>
-
-              {/* Provider Select */}
-              <div className="grid grid-cols-5 gap-1">
-                {Object.keys(keys).map(k => (
-                  <button key={k} onClick={() => setProvider(k)} 
-                    className={`text-[10px] font-bold font-code uppercase py-2 rounded transition-all ${provider === k ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50' : 'bg-white/5 text-slate-500 hover:text-slate-200'}`}>
-                    {k.slice(0,3)}
-                  </button>
-                ))}
-              </div>
-
-              {/* Input */}
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase font-code text-slate-400 ml-1">{provider.toUpperCase()} API KEY</label>
-                <input 
-                  type="password" 
-                  value={keys[provider]} 
-                  onChange={e => setKeys({...keys, [provider]: e.target.value})}
-                  className="w-full glass-input rounded-lg px-4 py-3 font-code text-xs"
-                  placeholder="sk-..."
-                />
-              </div>
-
-              {/* Proxy Toggle */}
-              <label className="flex items-center gap-3 p-3 rounded-lg bg-black/20 border border-white/5 cursor-pointer">
-                <input type="checkbox" checked={useProxy} onChange={e => setUseProxy(e.target.checked)} className="accent-cyan-500" />
-                <div>
-                  <div className="font-code text-[10px] uppercase text-slate-300">Enable CORS Proxy</div>
-                  <div className="text-[10px] text-slate-500">Required for Groq / OpenAI / Anthropic</div>
-                </div>
-              </label>
-
-              {/* Boot Button */}
-              <button 
-                onClick={() => { if(keys[provider].length > 5) { setHasKey(true); if(!booted) handleBoot(); } else alert("Enter Key"); }}
-                className="w-full py-3 rounded-lg gold-shimmer font-code text-xs font-bold text-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2">
-                <span>Initialize System</span>
-                <Icons.Send className="w-4 h-4" />
-              </button>
-            </div>
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-content">
+        <!-- Prompt Stack -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" data-section="prompt">
+            <span>Prompt Stack</span>
+            <span class="toggle-icon">▼</span>
           </div>
-        );
-      }
-
-      // --- MAIN APP (FIXED LAYOUT) ---
-      return (
-        <div className="w-full h-full flex bg-slate-950 text-slate-200 overflow-hidden relative">
-          {showMatrix && <MatrixRain />}
-
-          {/* SIDEBAR (Static Left) */}
-          <div className="w-16 md:w-20 flex-none h-full border-r border-white/5 bg-black/40 backdrop-blur-md flex flex-col items-center py-6 gap-6 z-20">
-             <div className="text-cyan-400"><Icons.Nexus className="w-8 h-8" /></div>
-             <div className="flex-1" />
-             <button onClick={() => { setMessages([]); handleBoot(); }} className="p-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-cyan-300 transition-all" title="Reset"><Icons.Refresh className="w-5 h-5" /></button>
-             <button onClick={() => setHasKey(false)} className="p-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-cyan-300 transition-all" title="Settings"><Icons.Settings className="w-5 h-5" /></button>
-          </div>
-
-          {/* MAIN COLUMN (Flex Column) */}
-          <div className="flex-1 flex flex-col h-full min-w-0 relative z-10">
-            
-            {/* HEADER (Static Top) */}
-            <header className="h-16 flex-none border-b border-white/5 bg-slate-950/80 backdrop-blur-md flex items-center justify-between px-6 z-20">
-              <div>
-                <h1 className="font-nexus text-lg tracking-widest font-bold text-slate-100">NEXUS <span className="text-cyan-400">OS</span></h1>
-                <div className="flex gap-2 text-[10px] font-code text-slate-500 uppercase">
-                  <span>Provider: {provider}</span>
-                  <span className="text-cyan-500/70">Meta Prompt: Active</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                 <button onClick={() => setShowMatrix(!showMatrix)} className="text-[10px] font-code px-3 py-1 rounded-full border border-white/10 hover:bg-white/5 transition-all">
-                   {showMatrix ? "BG: ON" : "BG: OFF"}
-                 </button>
-                 <div className={`w-2 h-2 rounded-full ${isThinking ? 'bg-yellow-400 animate-pulse' : 'bg-emerald-500'}`} />
-              </div>
-            </header>
-
-            {/* CHAT AREA (Scrollable Middle) */}
-            <div className="flex-1 overflow-y-auto custom-scroll p-4 md:p-6 space-y-6 scroll-smooth">
-              
-              {messages.length === 0 && !isThinking && (
-                 <div className="mt-10 p-6 rounded-xl border border-dashed border-slate-700 bg-slate-900/50 text-center max-w-lg mx-auto">
-                   <p className="font-code text-xs text-cyan-400 uppercase tracking-widest mb-2">System Ready</p>
-                   <p className="text-slate-400 text-sm">The kernel is loaded. Waiting for boot sequence...</p>
-                 </div>
-              )}
-
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} message-fade`}>
-                  <div className={`max-w-[90%] md:max-w-[80%] rounded-2xl p-4 border ${msg.role === 'user' 
-                    ? 'bg-indigo-950/60 border-indigo-500/30 text-indigo-50 rounded-tr-sm' 
-                    : msg.role === 'system' ? 'bg-red-900/20 border-red-500/30 text-red-200'
-                    : 'bg-slate-900/80 border-cyan-500/20 text-slate-200 rounded-tl-sm'}`}>
-                    
-                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
-                       <span className={`text-[10px] font-code uppercase tracking-widest ${msg.role === 'user' ? 'text-indigo-400' : 'text-cyan-400'}`}>
-                         {msg.role === 'user' ? 'Operator' : 'Nexus Core'}
-                       </span>
-                    </div>
-                    {parseMarkdown(msg.content)}
-                  </div>
-                </div>
-              ))}
-
-              {isThinking && (
-                <div className="flex justify-start message-fade">
-                  <div className="bg-slate-900/80 border border-cyan-500/20 rounded-2xl rounded-tl-sm p-4 flex items-center gap-3">
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
-                    <span className="font-code text-xs text-cyan-400 typing-dots">Computing<span>.</span><span>.</span><span>.</span></span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} className="h-4" />
+          <div class="sidebar-section-content" id="promptSection">
+            <div class="field-col">
+              <div class="field-label">Overlay</div>
+              <select class="select" id="overlaySelect"></select>
+              <div class="hint" id="overlayHint">Kernel is always applied. One overlay is active.</div>
             </div>
-
-            {/* INPUT AREA (Static Bottom) */}
-            <div className="flex-none p-4 md:p-6 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent z-20">
-              <form onSubmit={handleSend} className="relative max-w-4xl mx-auto">
-                <input 
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  placeholder="Enter command or query..."
-                  className="w-full glass-input rounded-xl pl-4 pr-14 py-4 font-mono text-sm shadow-2xl"
-                  disabled={isThinking}
-                />
-                <button 
-                  type="submit"
-                  disabled={!input.trim() || isThinking}
-                  className="absolute right-2 top-2 bottom-2 aspect-square rounded-lg bg-cyan-600 hover:bg-cyan-500 text-black flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                  <Icons.Send className="w-5 h-5" />
-                </button>
-              </form>
+            <div class="pill-row">
+              <button class="pill-btn" id="viewPromptStackBtn">View</button>
+              <button class="pill-btn" id="editOverlayBtn">Edit Overlay</button>
+              <button class="pill-btn" id="discoverPromptsBtn">Discover</button>
             </div>
-
           </div>
         </div>
-      );
+
+        <!-- Nexus Commands -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" data-section="commands">
+            <span>Nexus Commands</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="commandsSection">
+            <div id="commandsList"></div>
+          </div>
+        </div>
+
+        <!-- Session -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" data-section="sessions">
+            <span>Session</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="sessionsSection">
+            <button class="session-btn" id="newSessionBtn">+ New Session</button>
+            <button class="session-btn" id="exportSessionBtn">↓ Export Session</button>
+            <button class="session-btn" id="importSessionBtn">↑ Import Session</button>
+            <button class="session-btn danger" id="clearSessionBtn">✕ Clear Session</button>
+          </div>
+        </div>
+
+        <!-- Library quick -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" data-section="library">
+            <span>Library</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="librarySection">
+            <div class="hint">Open Power (⚡) → Library to switch sessions & manage artifacts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages"></div>
+
+      <div class="toast" id="toast"></div>
+
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea
+            class="message-input"
+            id="messageInput"
+            placeholder="Enter message... (Shift+Enter for new line)"
+            rows="1"
+          ></textarea>
+          <button class="stop-btn" id="stopBtn" disabled>Stop</button>
+          <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+
+        <div class="status-bar">
+          <div class="status-bar-left">
+            <div class="status-bar-item">
+              <span class="label">System:</span>
+              <span class="value" id="systemTokens">~0 tokens</span>
+            </div>
+            <div class="status-bar-item">
+              <span class="label">Conversation:</span>
+              <span class="value" id="conversationTokens">~0 tokens</span>
+            </div>
+            <div class="status-bar-item">
+              <span class="label">Provider:</span>
+              <span class="value" id="currentProviderDisplay">—</span>
+            </div>
+          </div>
+          <div class="status-bar-item">
+            <span class="label">Model:</span>
+            <span class="value" id="currentModelDisplay">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt Stack Modal -->
+  <div class="modal-overlay" id="promptStackModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Prompt Stack (Kernel + Overlay)</div>
+        <button class="modal-close" id="closePromptStackModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="hint">
+          Composition rule (locked): <b>Kernel (always)</b> + <b>one active overlay delta</b> (Pro mode or Community).
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="stack">Stack</button>
+          <button class="tab-btn" data-tab="kernel">Kernel</button>
+          <button class="tab-btn" data-tab="overlay">Overlay</button>
+          <button class="tab-btn" data-tab="preview">Preview</button>
+        </div>
+
+        <div class="panel visible" id="tab-stack">
+          <h3>Active Stack</h3>
+          <div class="row">
+            <div class="col">
+              <div class="kv">
+                <div class="k">Kernel</div>
+                <div class="v">NEXUS Kernel v0.10 (always on)</div>
+              </div>
+              <div class="kv">
+                <div class="k">Overlay</div>
+                <div class="v" id="activeOverlayName">—</div>
+              </div>
+              <div class="kv">
+                <div class="k">Notes</div>
+                <div class="v">Edit overlays safely. Kernel editing is supported but discouraged.</div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="kv">
+                <div class="k">Est. Tokens</div>
+                <div class="v" id="stackTokenEstimate">~0</div>
+              </div>
+              <div class="kv">
+                <div class="k">Safety</div>
+                <div class="v">Assistant Markdown is sanitized before rendering.</div>
+              </div>
+              <div class="kv">
+                <div class="k">Persistence</div>
+                <div class="v">API keys are memory-only by default (sessionStorage opt-in in Power › Security).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="tab-kernel">
+          <h3>Kernel</h3>
+          <div class="hint" style="margin-bottom:8px;">
+            Kernel is always applied. You can view it here; editing is possible but not recommended.
+          </div>
+          <textarea class="input" id="kernelTextarea" style="min-height:280px; resize:vertical; white-space:pre; line-height:1.5;"></textarea>
+          <div class="pill-row" style="margin-top:8px;">
+            <button class="pill-btn" id="resetKernelBtn">Reset Kernel</button>
+            <button class="pill-btn primary" id="saveKernelBtn">Save Kernel</button>
+          </div>
+        </div>
+
+        <div class="panel" id="tab-overlay">
+          <h3>Overlay</h3>
+          <div class="hint" style="margin-bottom:8px;">
+            If you edit, a new <b>Custom Overlay</b> will be created and set active.
+          </div>
+          <textarea class="input" id="overlayTextarea" style="min-height:280px; resize:vertical; white-space:pre; line-height:1.5;"></textarea>
+          <div class="pill-row" style="margin-top:8px;">
+            <button class="pill-btn" id="resetOverlayBtn">Revert to Selected</button>
+            <button class="pill-btn primary" id="saveOverlayBtn">Save as Custom</button>
+          </div>
+        </div>
+
+        <div class="panel" id="tab-preview">
+          <h3>Preview (Composed System Prompt)</h3>
+          <div class="hint" style="margin-bottom:8px;">
+            This is what will be sent as the system prompt (Anthropic: <code>system</code>; OpenAI-compatible: first <code>system</code> message).
+          </div>
+          <textarea class="input" id="previewTextarea" style="min-height:280px; resize:vertical; white-space:pre; line-height:1.5;" readonly></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power Modal -->
+  <div class="modal-overlay" id="powerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Power Mode Panels</div>
+        <button class="modal-close" id="closePowerModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="tabs">
+          <button class="tab-btn active" data-ptab="inspector">Inspector</button>
+          <button class="tab-btn" data-ptab="library">Library</button>
+          <button class="tab-btn" data-ptab="prompts">Prompts</button>
+          <button class="tab-btn" data-ptab="security">Security</button>
+          <button class="tab-btn" data-ptab="tasks">Tasks</button>
+        </div>
+
+        <!-- Inspector -->
+        <div class="panel visible" id="ptab-inspector">
+          <h3>Inspector</h3>
+          <div class="row">
+            <div class="col">
+              <div class="kv">
+                <div class="k">Connection</div>
+                <div class="v" id="inspectorConnection">—</div>
+              </div>
+              <div class="kv">
+                <div class="k">Last Error</div>
+                <div class="v" id="inspectorLastError">—</div>
+              </div>
+              <div class="kv">
+                <div class="k">Last Latency</div>
+                <div class="v" id="inspectorLastLatency">—</div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="field-col">
+                <div class="field-label">Base URL Override (advanced)</div>
+                <input class="input" id="baseUrlOverrideInput" placeholder="Leave blank for default">
+                <div class="hint">No baked-in proxies. This field is empty by default.</div>
+              </div>
+              <div class="field-col">
+                <div class="field-label">OpenRouter Attribution (optional)</div>
+                <input class="input" id="openrouterRefererInput" placeholder="HTTP-Referer (e.g. https://your.site)">
+                <input class="input" id="openrouterTitleInput" placeholder="X-Title (e.g. Nexus Terminal)">
+              </div>
+              <div class="pill-row">
+                <button class="pill-btn primary" id="saveInspectorBtn">Save</button>
+                <button class="pill-btn" id="resetInspectorBtn">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Library -->
+        <div class="panel" id="ptab-library">
+          <h3>Library</h3>
+          <div class="row">
+            <div class="col">
+              <div class="hint" style="margin-bottom:8px;">Sessions stored in IndexedDB.</div>
+              <div class="list" id="sessionsList"></div>
+            </div>
+            <div class="col">
+              <div class="hint" style="margin-bottom:8px;">Artifacts (snapshots, exports, notes).</div>
+              <div class="list" id="artifactsList"></div>
+              <div class="pill-row" style="margin-top:10px;">
+                <button class="pill-btn" id="createSnapshotBtn">Create Snapshot Artifact</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prompts -->
+        <div class="panel" id="ptab-prompts">
+          <h3>Prompts</h3>
+          <div class="row">
+            <div class="col">
+              <div class="field-col">
+                <div class="field-label">GitHub Raw JSON URL (editable)</div>
+                <input class="input" id="githubUrlInput" placeholder="https://raw.githubusercontent.com/.../prompts.json">
+                <div class="hint">Discovery is client-only. Cached in IndexedDB.</div>
+              </div>
+              <div class="pill-row">
+                <button class="pill-btn primary" id="refreshDiscoveryBtn">Refresh</button>
+                <button class="pill-btn" id="clearDiscoveryCacheBtn">Clear Cache</button>
+              </div>
+
+              <div class="kv" style="margin-top:10px;">
+                <div class="k">Discovery Status</div>
+                <div class="v" id="discoveryStatus">—</div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="hint" style="margin-bottom:8px;">Installed Prompt Packs</div>
+              <div class="list" id="promptPacksList"></div>
+              <div class="hint" style="margin-top:10px;">Curated placeholder packs ship with the app.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="panel" id="ptab-security">
+          <h3>Security</h3>
+          <div class="row">
+            <div class="col">
+              <div class="kv">
+                <div class="k">Key Storage</div>
+                <div class="v" id="keyStorageStatus">Memory-only (default)</div>
+              </div>
+              <div class="field-col">
+                <div class="field-label">Persist key in sessionStorage (opt-in)</div>
+                <label style="display:flex; gap:10px; align-items:center; font-size:12px; color:var(--text-secondary);">
+                  <input type="checkbox" id="persistKeyCheckbox">
+                  Keep the key for this browser tab session only
+                </label>
+                <div class="hint">Never saved to IndexedDB/localStorage by this app.</div>
+              </div>
+              <div class="pill-row">
+                <button class="pill-btn" id="securityClearKeyBtn">Clear Key</button>
+                <button class="pill-btn" id="securityLockBtn">Lock Terminal</button>
+              </div>
+            </div>
+            <div class="col">
+              <div class="kv">
+                <div class="k">Rendering Safety</div>
+                <div class="v">Assistant Markdown is sanitized (DOMPurify). Imported sessions are validated.</div>
+              </div>
+              <div class="kv">
+                <div class="k">No Background Autonomy</div>
+                <div class="v">Client-only scheduling runs only while this page is open.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="panel" id="ptab-tasks">
+          <h3>Tasks (Client-only)</h3>
+          <div class="hint" style="margin-bottom:10px;">
+            Tasks run only while this page is open. Use <code>/tick daily</code> or create one here.
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="field-col">
+                <div class="field-label">New Task</div>
+                <input class="input" id="newTaskTitle" placeholder="e.g., Daily /status ritual">
+                <select class="select" id="newTaskSchedule">
+                  <option value="once">Once (in 5 minutes)</option>
+                  <option value="daily">Daily (next 09:00 local)</option>
+                  <option value="hourly">Hourly</option>
+                </select>
+                <div class="pill-row">
+                  <button class="pill-btn primary" id="addTaskBtn">Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="hint" style="margin-bottom:8px;">Active tasks for this session</div>
+              <div class="list" id="tasksList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for import -->
+  <input type="file" class="hidden-input" id="importFileInput" accept=".json">
+
+  <script>
+    /*
+      ============================================================================
+      NEXUS TERMINAL v0.10 — RELEASE NOTES (major additions vs v0.04)
+      ----------------------------------------------------------------------------
+      • Multi-provider Tier-1 adapters: Anthropic, Groq, xAI, OpenRouter
+        + Tier-2 best-effort OpenAI direct.
+      • Kernel + one active overlay delta (Pro modes or Community prompt).
+      • Prompt discovery: bundled placeholder packs + editable GitHub raw JSON URL.
+      • IndexedDB library (sessions, settings, prompt packs, artifacts, discovery cache).
+      • Power mode panels (Inspector, Library, Prompts, Security, Tasks).
+      • AbortController Stop button for streaming.
+      • Normalized streaming deltas (text/thinking) across providers.
+      • Markdown rendering preserved + sanitized (DOMPurify) + code copy buttons.
+      • API key persistence: memory-only by default; sessionStorage opt-in (Power › Security).
+      • Client-only scheduling stubs (Tasks) — runs only while the page is open.
+      ============================================================================
+    */
+
+    // ============================================================================
+    // GLOBAL CONSTANTS
+    // ============================================================================
+
+    const APP_VERSION = '0.10';
+    const DB_NAME = 'nexus_terminal_db';
+    const DB_VERSION = 1;
+
+    const DEFAULT_GITHUB_DISCOVERY_URL =
+      'https://raw.githubusercontent.com/your-org/your-repo/main/nexus-prompts.json';
+
+    // Key in sessionStorage if user opts in
+    const SESSION_KEY_STORAGE = 'nexus_api_key_session';
+    const SESSION_KEY_OPTIN = 'nexus_api_key_optin';
+
+    // ============================================================================
+    // NEXUS KERNEL + OVERLAYS (Kernel always + ONE overlay delta)
+    // ============================================================================
+
+    const NEXUS_KERNEL_DEFAULT = `NEXUS KERNEL v0.10 — Always-On Constitution
+
+You are Nexus OS: a structured thinking-and-building system in one chat window.
+You are NOT a person, and you do NOT run background tasks. You are honest about uncertainty.
+
+HARD CONSTRAINTS (override everything):
+1) Radical Honesty: never claim tools, access, memory, or actions you don't have.
+2) No Persistence: you do not remember beyond the visible conversation.
+3) No Background Autonomy: no timers/daemons. (Client may show task reminders only while open.)
+4) High-Risk Domains: medical/legal/financial/therapy → general info only, non-prescriptive.
+5) Evidence Discipline: missing provenance → mark as [Assumption] (E0). Never present guesses as facts.
+
+EVIDENCE GRADES (use when making factual/operational claims):
+E0 Unverified [Assumption]
+E1 User-stated
+E2 Pack-sourced
+E3 Tool-verified (client-side checks only)
+E4 Multi-verified
+
+CAPABILITIES (this environment):
+- You can write text, plans, code, checklists.
+- You cannot browse the web or access files unless the user provides content.
+- This terminal may route messages to different model providers; you must not claim which provider is "better" unless user asks.
+
+DEFAULT BEHAVIOR:
+- Be practical. Be clear. Prefer concrete next steps.
+- If user uses /commands, comply with their intent (some commands may be handled locally by the client).
+`;
+
+    const PRO_OVERLAYS = [
+      {
+        id: 'pro:minimal',
+        name: 'Pro Mode: Minimal',
+        body: `MODE: MINIMAL
+- Keep answers concise and direct.
+- Skip formal sections unless requested.
+- Only flag uncertainty when it materially affects the answer.`
+      },
+      {
+        id: 'pro:standard',
+        name: 'Pro Mode: Standard',
+        body: `MODE: STANDARD
+- Use: Orientation (1–2 sentences) → Structured Core (2–5 sections) → Next Moves (bullets).
+- Use evidence grades for claims that drive decisions.`
+      },
+      {
+        id: 'pro:rigorous',
+        name: 'Pro Mode: Rigorous',
+        body: `MODE: RIGOROUS
+- Use evidence grades for key claims.
+- Add a brief “GATES” line after structured outputs: KERNEL/CAP/EVIDENCE/CLARITY/CONSIST.
+- Call out assumptions explicitly and propose verification steps.`
+      },
+      {
+        id: 'pro:ship',
+        name: 'Pro Mode: Ship',
+        body: `MODE: SHIP
+- Produce platform-ready outputs with options/variants.
+- Include a human checklist at the end.
+- If a plan depends on unknowns, include rollback triggers and minimum viable verification.`
+      }
+    ];
+
+    // Bundled placeholder prompt packs (Discovery: curated list)
+    const CURATED_PROMPT_PACKS = [
+      {
+        id: 'curated:nexus-community-starter',
+        source: 'curated',
+        name: 'Community Starter Pack (Placeholder)',
+        description: 'Example prompt overlays. Replace with your real curated list.',
+        author: 'Nexus Terminal',
+        version: '0.1',
+        prompts: [
+          {
+            id: 'overlay:creator',
+            title: 'Overlay: Creator Focus',
+            tags: ['creator', 'writing', 'content'],
+            body: `OVERLAY: CREATOR FOCUS
+- Optimize for creative clarity and momentum.
+- Offer 2–3 variants when writing copy or titles.
+- Suggest a next action that can be done in under 10 minutes.`
+          },
+          {
+            id: 'overlay:builder',
+            title: 'Overlay: Builder Focus',
+            tags: ['engineering', 'product', 'systems'],
+            body: `OVERLAY: BUILDER FOCUS
+- Prefer concrete architecture, interfaces, and edge cases.
+- Provide implementation checklists and guardrails.
+- Surface security/performance risks early.`
+          }
+        ]
+      }
+    ];
+
+    // ============================================================================
+    // COMMANDS (local routing where appropriate)
+    // ============================================================================
+
+    const NEXUS_COMMANDS = {
+      core: {
+        label: 'Core',
+        commands: [
+          { cmd: '/help', desc: 'Commands & quick reference' },
+          { cmd: '/status', desc: 'State overview (local)' },
+          { cmd: '/snapshot', desc: 'Create snapshot artifact (local)' },
+          { cmd: '/state', desc: 'Print kernel state (local stub)' },
+          { cmd: '/tick daily', desc: 'Create daily task reminder (local)' }
+        ]
+      },
+      workflow: {
+        label: 'Workflow',
+        commands: [
+          { cmd: '/plan', desc: 'Structured plan (model)' },
+          { cmd: '/research', desc: 'Research mode (model)' },
+          { cmd: '/redteam', desc: 'Critical analysis (model)' },
+          { cmd: '/merge', desc: 'Conflict-first merge (model)' }
+        ]
+      },
+      meta: {
+        label: 'Meta',
+        commands: [
+          { cmd: '/drift check', desc: 'Detect patterns (model)' },
+          { cmd: '/impact', desc: 'Ethics check (model)' }
+        ]
+      }
+    };
+
+    // ============================================================================
+    // INDEXEDDB LIBRARY
+    // ============================================================================
+
+    class NexusDB {
+      constructor() {
+        this.db = null;
+      }
+
+      async open() {
+        if (this.db) return this.db;
+
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+          req.onupgradeneeded = (event) => {
+            const db = req.result;
+
+            // settings
+            if (!db.objectStoreNames.contains('settings')) {
+              db.createObjectStore('settings', { keyPath: 'id' });
+            }
+            // sessions
+            if (!db.objectStoreNames.contains('sessions')) {
+              const s = db.createObjectStore('sessions', { keyPath: 'id' });
+              s.createIndex('updatedAt', 'updatedAt');
+              s.createIndex('title', 'title');
+            }
+            // prompt packs
+            if (!db.objectStoreNames.contains('promptPacks')) {
+              const p = db.createObjectStore('promptPacks', { keyPath: 'id' });
+              p.createIndex('source', 'source');
+              p.createIndex('name', 'name');
+            }
+            // prompt cache
+            if (!db.objectStoreNames.contains('promptCache')) {
+              const c = db.createObjectStore('promptCache', { keyPath: 'url' });
+              c.createIndex('lastFetchedAt', 'lastFetchedAt');
+            }
+            // artifacts
+            if (!db.objectStoreNames.contains('artifacts')) {
+              const a = db.createObjectStore('artifacts', { keyPath: 'id' });
+              a.createIndex('type', 'type');
+              a.createIndex('createdAt', 'createdAt');
+              a.createIndex('linkedSessionId', 'linkedSessionId');
+            }
+          };
+
+          req.onsuccess = () => {
+            this.db = req.result;
+            resolve(this.db);
+          };
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      tx(storeName, mode = 'readonly') {
+        const tx = this.db.transaction(storeName, mode);
+        return tx.objectStore(storeName);
+      }
+
+      async get(storeName, key) {
+        await this.open();
+        return new Promise((resolve, reject) => {
+          const req = this.tx(storeName).get(key);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async put(storeName, value) {
+        await this.open();
+        return new Promise((resolve, reject) => {
+          const req = this.tx(storeName, 'readwrite').put(value);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async delete(storeName, key) {
+        await this.open();
+        return new Promise((resolve, reject) => {
+          const req = this.tx(storeName, 'readwrite').delete(key);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async list(storeName, { index = null, direction = 'prev', limit = 50 } = {}) {
+        await this.open();
+        return new Promise((resolve, reject) => {
+          const out = [];
+          const store = this.tx(storeName);
+          const source = index ? store.index(index) : store;
+          const req = source.openCursor(null, direction);
+
+          req.onsuccess = () => {
+            const cursor = req.result;
+            if (!cursor || out.length >= limit) return resolve(out);
+            out.push(cursor.value);
+            cursor.continue();
+          };
+          req.onerror = () => reject(req.error);
+        });
+      }
     }
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
+    const db = new NexusDB();
+
+    // ============================================================================
+    // PROVIDER ADAPTERS (Tier-1 + Tier-2 OpenAI best-effort)
+    // ============================================================================
+
+    /**
+     * Normalized streaming delta:
+     * { type: 'text'|'thinking'|'meta', value: string|object }
+     */
+
+    const Providers = {
+      anthropic: {
+        id: 'anthropic',
+        label: 'Anthropic',
+        tier: 1,
+        defaultBaseUrl: 'https://api.anthropic.com/v1/messages',
+        keyLooksLike: (k) => /^sk-ant-/.test(k),
+        defaultModels: [
+          'claude-sonnet-4-20250514',
+          'claude-opus-4-20250514',
+          'claude-3-5-sonnet-20241022',
+          'claude-3-5-haiku-20241022',
+          'claude-3-opus-20240229',
+          'claude-3-haiku-20240307'
+        ],
+        supportsThinking: true,
+
+        buildRequest: ({ apiKey, baseUrl, model, systemPrompt, messages, temperature, maxTokens, thinkingBudget }) => {
+          const url = baseUrl || Providers.anthropic.defaultBaseUrl;
+
+          // Anthropic expects messages as array of {role, content}
+          // We'll keep the user's/assistant's text content only.
+          const body = {
+            model,
+            max_tokens: maxTokens,
+            stream: true,
+            messages: messages.map(m => ({
+              role: m.role === 'assistant' ? 'assistant' : 'user',
+              content: m.content
+            }))
+          };
+
+          // system prompt injection (Kernel + Overlay)
+          if (systemPrompt) body.system = systemPrompt;
+          if (temperature !== 1) body.temperature = temperature;
+
+          // thinking (Claude models that support it)
+          if (thinkingBudget && thinkingBudget > 0) {
+            body.thinking = { type: 'enabled', budget_tokens: thinkingBudget };
+          }
+
+          const headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            // required for direct browser access
+            'anthropic-dangerous-direct-browser-access': 'true'
+          };
+
+          return { url, headers, body };
+        },
+
+        parseSSEData: (data) => {
+          // Anthropic streaming emits JSON events.
+          // We normalize only the content deltas we care about.
+          let evt;
+          try { evt = JSON.parse(data); } catch { return []; }
+          const deltas = [];
+
+          if (evt.type === 'content_block_delta') {
+            const d = evt.delta;
+            if (d?.type === 'thinking_delta' && typeof d.thinking === 'string') {
+              deltas.push({ type: 'thinking', value: d.thinking });
+            } else if (d?.type === 'text_delta' && typeof d.text === 'string') {
+              deltas.push({ type: 'text', value: d.text });
+            }
+          }
+
+          return deltas;
+        }
+      },
+
+      groq: {
+        id: 'groq',
+        label: 'Groq',
+        tier: 1,
+        defaultBaseUrl: 'https://api.groq.com/openai/v1',
+        keyLooksLike: (k) => /^gsk_/.test(k) || /groq/i.test(k),
+        defaultModels: [
+          'llama-3.3-70b-versatile',
+          'llama-3.1-70b-versatile',
+          'mixtral-8x7b-32768',
+          'gemma2-9b-it'
+        ],
+        supportsThinking: false,
+
+        buildRequest: ({ apiKey, baseUrl, model, systemPrompt, messages, temperature, maxTokens }) => {
+          const base = baseUrl || Providers.groq.defaultBaseUrl;
+          const url = base.replace(/\/$/, '') + '/chat/completions';
+
+          const openaiMessages = [];
+          if (systemPrompt) openaiMessages.push({ role: 'system', content: systemPrompt });
+          for (const m of messages) openaiMessages.push({ role: m.role, content: m.content });
+
+          const body = {
+            model,
+            messages: openaiMessages,
+            temperature,
+            max_tokens: maxTokens,
+            stream: true
+          };
+
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          };
+
+          return { url, headers, body };
+        },
+
+        parseSSEData: (data) => parseOpenAICompatSSE(data)
+      },
+
+      xai: {
+        id: 'xai',
+        label: 'xAI',
+        tier: 1,
+        defaultBaseUrl: 'https://api.x.ai/v1',
+        keyLooksLike: (k) => /^xai-/.test(k) || /xai/i.test(k),
+        defaultModels: [
+          'grok-4',
+          'grok-3',
+          'grok-2',
+          'grok-beta'
+        ],
+        supportsThinking: false,
+
+        buildRequest: ({ apiKey, baseUrl, model, systemPrompt, messages, temperature, maxTokens }) => {
+          const base = baseUrl || Providers.xai.defaultBaseUrl;
+          const url = base.replace(/\/$/, '') + '/chat/completions';
+
+          const openaiMessages = [];
+          if (systemPrompt) openaiMessages.push({ role: 'system', content: systemPrompt });
+          for (const m of messages) openaiMessages.push({ role: m.role, content: m.content });
+
+          const body = {
+            model,
+            messages: openaiMessages,
+            temperature,
+            max_tokens: maxTokens,
+            stream: true
+          };
+
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          };
+
+          return { url, headers, body };
+        },
+
+        parseSSEData: (data) => parseOpenAICompatSSE(data)
+      },
+
+      openrouter: {
+        id: 'openrouter',
+        label: 'OpenRouter',
+        tier: 1,
+        defaultBaseUrl: 'https://openrouter.ai/api/v1',
+        keyLooksLike: (k) => /^sk-or-/.test(k) || /^sk-or-v1-/.test(k),
+        defaultModels: [
+          'openai/gpt-4o-mini',
+          'anthropic/claude-3.5-sonnet',
+          'google/gemini-1.5-pro',
+          'meta-llama/llama-3.1-70b-instruct'
+        ],
+        supportsThinking: false,
+
+        buildRequest: ({ apiKey, baseUrl, model, systemPrompt, messages, temperature, maxTokens, openrouterReferer, openrouterTitle }) => {
+          const base = baseUrl || Providers.openrouter.defaultBaseUrl;
+          const url = base.replace(/\/$/, '') + '/chat/completions';
+
+          const openaiMessages = [];
+          if (systemPrompt) openaiMessages.push({ role: 'system', content: systemPrompt });
+          for (const m of messages) openaiMessages.push({ role: m.role, content: m.content });
+
+          const body = {
+            model,
+            messages: openaiMessages,
+            temperature,
+            max_tokens: maxTokens,
+            stream: true
+          };
+
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          };
+
+          // Optional attribution
+          if (openrouterReferer) headers['HTTP-Referer'] = openrouterReferer;
+          if (openrouterTitle) headers['X-Title'] = openrouterTitle;
+
+          return { url, headers, body };
+        },
+
+        parseSSEData: (data) => parseOpenAICompatSSE(data)
+      },
+
+      openai: {
+        id: 'openai',
+        label: 'OpenAI (Tier-2)',
+        tier: 2,
+        defaultBaseUrl: 'https://api.openai.com/v1',
+        keyLooksLike: (k) => /^sk-/.test(k) || /^sk-proj-/.test(k),
+        defaultModels: [
+          'gpt-4o-mini',
+          'gpt-4.1-mini',
+          'gpt-4o'
+        ],
+        supportsThinking: false,
+
+        buildRequest: ({ apiKey, baseUrl, model, systemPrompt, messages, temperature, maxTokens }) => {
+          const base = baseUrl || Providers.openai.defaultBaseUrl;
+          const url = base.replace(/\/$/, '') + '/chat/completions';
+
+          const openaiMessages = [];
+          if (systemPrompt) openaiMessages.push({ role: 'system', content: systemPrompt });
+          for (const m of messages) openaiMessages.push({ role: m.role, content: m.content });
+
+          const body = {
+            model,
+            messages: openaiMessages,
+            temperature,
+            max_tokens: maxTokens,
+            stream: true
+          };
+
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          };
+
+          return { url, headers, body };
+        },
+
+        parseSSEData: (data) => parseOpenAICompatSSE(data)
+      }
+    };
+
+    function parseOpenAICompatSSE(data) {
+      // data is JSON or "[DONE]" for OpenAI-compatible chat completions streaming.
+      if (data === '[DONE]') return [];
+      let evt;
+      try { evt = JSON.parse(data); } catch { return []; }
+
+      const deltas = [];
+      const choice = evt?.choices?.[0];
+      const delta = choice?.delta;
+
+      // Standard
+      if (delta?.content) deltas.push({ type: 'text', value: delta.content });
+
+      // Some providers may stream reasoning/thinking fields
+      if (delta?.reasoning) deltas.push({ type: 'thinking', value: delta.reasoning });
+
+      // Some may use "content" as array; ignore for now.
+      return deltas;
+    }
+
+    function detectProviderFromKey(apiKey) {
+      if (!apiKey) return null;
+      const trimmed = apiKey.trim();
+      // Priority: match known distinct prefixes first
+      if (Providers.anthropic.keyLooksLike(trimmed)) return 'anthropic';
+      if (Providers.groq.keyLooksLike(trimmed)) return 'groq';
+      if (Providers.openrouter.keyLooksLike(trimmed)) return 'openrouter';
+      if (Providers.xai.keyLooksLike(trimmed)) return 'xai';
+      if (Providers.openai.keyLooksLike(trimmed)) return 'openai';
+      return null;
+    }
+
+    // ============================================================================
+    // APP STATE
+    // ============================================================================
+
+    const state = {
+      // secrets (memory-only by default)
+      apiKey: '',
+      connected: false,
+
+      // provider config
+      providerId: 'anthropic',
+      modelId: Providers.anthropic.defaultModels[0],
+      temperature: 1,
+      maxTokens: 2048,
+      thinkingBudget: 10000,
+
+      // advanced/inspector
+      baseUrlOverride: '',
+      openrouterReferer: '',
+      openrouterTitle: '',
+
+      // prompt stack
+      kernelPrompt: NEXUS_KERNEL_DEFAULT,
+      kernelModified: false,
+      overlayId: 'pro:standard',
+      overlayCustomText: '', // used when overlayId === 'custom:overlay'
+      overlayModified: false,
+
+      // discovery
+      githubDiscoveryUrl: DEFAULT_GITHUB_DISCOVERY_URL,
+      discoveryStatus: 'Not refreshed yet.',
+      promptPacks: [],
+
+      // session + library
+      currentSession: null, // {id, title, createdAt, updatedAt, messages[], tasks[], kernelState, ...}
+      sessionsIndex: [],
+      artifactsIndex: [],
+
+      // ui
+      sidebarCollapsed: false,
+      collapsedSections: {},
+      isLoading: false,
+      abortController: null,
+      lastError: '',
+      lastLatencyMs: null,
+
+      // tasks runner
+      taskTimer: null
+    };
+
+    // ============================================================================
+    // DOM ELEMENTS
+    // ============================================================================
+
+    const el = {
+      menuToggle: document.getElementById('menuToggle'),
+      sidebar: document.getElementById('sidebar'),
+      settingsToggle: document.getElementById('settingsToggle'),
+      settingsPanel: document.getElementById('settingsPanel'),
+
+      providerIndicator: document.getElementById('providerIndicator'),
+      providerIndicatorText: document.getElementById('providerIndicatorText'),
+
+      promptIndicator: document.getElementById('promptIndicator'),
+      promptIndicatorText: document.getElementById('promptIndicatorText'),
+
+      powerBtn: document.getElementById('powerBtn'),
+      helpBtn: document.getElementById('helpBtn'),
+
+      apiKeyInput: document.getElementById('apiKeyInput'),
+      providerSelect: document.getElementById('providerSelect'),
+      modelInput: document.getElementById('modelInput'),
+      modelDatalist: document.getElementById('modelDatalist'),
+      temperatureInput: document.getElementById('temperatureInput'),
+      maxTokensInput: document.getElementById('maxTokensInput'),
+      thinkingBudgetInput: document.getElementById('thinkingBudgetInput'),
+
+      testConnectionBtn: document.getElementById('testConnectionBtn'),
+      clearKeyBtn: document.getElementById('clearKeyBtn'),
+
+      overlaySelect: document.getElementById('overlaySelect'),
+      overlayHint: document.getElementById('overlayHint'),
+      viewPromptStackBtn: document.getElementById('viewPromptStackBtn'),
+      editOverlayBtn: document.getElementById('editOverlayBtn'),
+      discoverPromptsBtn: document.getElementById('discoverPromptsBtn'),
+
+      commandsList: document.getElementById('commandsList'),
+
+      newSessionBtn: document.getElementById('newSessionBtn'),
+      exportSessionBtn: document.getElementById('exportSessionBtn'),
+      importSessionBtn: document.getElementById('importSessionBtn'),
+      importFileInput: document.getElementById('importFileInput'),
+      clearSessionBtn: document.getElementById('clearSessionBtn'),
+
+      chatMessages: document.getElementById('chatMessages'),
+      toast: document.getElementById('toast'),
+
+      messageInput: document.getElementById('messageInput'),
+      sendBtn: document.getElementById('sendBtn'),
+      stopBtn: document.getElementById('stopBtn'),
+
+      systemTokens: document.getElementById('systemTokens'),
+      conversationTokens: document.getElementById('conversationTokens'),
+      currentProviderDisplay: document.getElementById('currentProviderDisplay'),
+      currentModelDisplay: document.getElementById('currentModelDisplay'),
+
+      // Prompt stack modal
+      promptStackModal: document.getElementById('promptStackModal'),
+      closePromptStackModal: document.getElementById('closePromptStackModal'),
+      kernelTextarea: document.getElementById('kernelTextarea'),
+      overlayTextarea: document.getElementById('overlayTextarea'),
+      previewTextarea: document.getElementById('previewTextarea'),
+      resetKernelBtn: document.getElementById('resetKernelBtn'),
+      saveKernelBtn: document.getElementById('saveKernelBtn'),
+      resetOverlayBtn: document.getElementById('resetOverlayBtn'),
+      saveOverlayBtn: document.getElementById('saveOverlayBtn'),
+      activeOverlayName: document.getElementById('activeOverlayName'),
+      stackTokenEstimate: document.getElementById('stackTokenEstimate'),
+
+      // Power modal
+      powerModal: document.getElementById('powerModal'),
+      closePowerModal: document.getElementById('closePowerModal'),
+
+      inspectorConnection: document.getElementById('inspectorConnection'),
+      inspectorLastError: document.getElementById('inspectorLastError'),
+      inspectorLastLatency: document.getElementById('inspectorLastLatency'),
+      baseUrlOverrideInput: document.getElementById('baseUrlOverrideInput'),
+      openrouterRefererInput: document.getElementById('openrouterRefererInput'),
+      openrouterTitleInput: document.getElementById('openrouterTitleInput'),
+      saveInspectorBtn: document.getElementById('saveInspectorBtn'),
+      resetInspectorBtn: document.getElementById('resetInspectorBtn'),
+
+      sessionsList: document.getElementById('sessionsList'),
+      artifactsList: document.getElementById('artifactsList'),
+      createSnapshotBtn: document.getElementById('createSnapshotBtn'),
+
+      githubUrlInput: document.getElementById('githubUrlInput'),
+      refreshDiscoveryBtn: document.getElementById('refreshDiscoveryBtn'),
+      clearDiscoveryCacheBtn: document.getElementById('clearDiscoveryCacheBtn'),
+      discoveryStatus: document.getElementById('discoveryStatus'),
+      promptPacksList: document.getElementById('promptPacksList'),
+
+      keyStorageStatus: document.getElementById('keyStorageStatus'),
+      persistKeyCheckbox: document.getElementById('persistKeyCheckbox'),
+      securityClearKeyBtn: document.getElementById('securityClearKeyBtn'),
+      securityLockBtn: document.getElementById('securityLockBtn'),
+
+      newTaskTitle: document.getElementById('newTaskTitle'),
+      newTaskSchedule: document.getElementById('newTaskSchedule'),
+      addTaskBtn: document.getElementById('addTaskBtn'),
+      tasksList: document.getElementById('tasksList')
+    };
+
+    // ============================================================================
+    // UTILITIES
+    // ============================================================================
+
+    function uuid() {
+      // lightweight UUID-ish
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function nowISO() { return new Date().toISOString(); }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    function estimateTokens(text) {
+      // cheap heuristic; good enough for UI feedback
+      if (!text) return 0;
+      return Math.ceil(text.length / 4);
+    }
+
+    function toast(msg, ms = 2200) {
+      el.toast.innerHTML = msg;
+      el.toast.classList.add('visible');
+      setTimeout(() => el.toast.classList.remove('visible'), ms);
+    }
+
+    // ============================================================================
+    // PROMPT STACK
+    // ============================================================================
+
+    function getOverlayById(id) {
+      if (id === 'custom:overlay') {
+        return { id, name: 'Custom Overlay', body: state.overlayCustomText || '' };
+      }
+      const pro = PRO_OVERLAYS.find(o => o.id === id);
+      if (pro) return pro;
+
+      for (const pack of state.promptPacks) {
+        for (const p of (pack.prompts || [])) {
+          const pid = `pack:${pack.id}:${p.id}`;
+          if (pid === id) return { id, name: `${p.title} (Pack: ${pack.name})`, body: p.body || '' };
+        }
+      }
+      // fallback
+      return PRO_OVERLAYS.find(o => o.id === 'pro:standard') || { id: 'pro:standard', name: 'Pro Mode: Standard', body: '' };
+    }
+
+    function composeSystemPrompt() {
+      const overlay = getOverlayById(state.overlayId);
+      const kernel = state.kernelPrompt || '';
+      const overlayBody = overlay?.body || '';
+      return `${kernel}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOVERLAY DELTA (one active)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${overlayBody}`.trim();
+    }
+
+    function refreshPromptIndicator() {
+      const overlay = getOverlayById(state.overlayId);
+      const label = `Kernel + ${overlay.name}`;
+      el.promptIndicatorText.textContent = label;
+
+      // show modified dot if kernel or custom overlay changed
+      const modified = state.kernelModified || (state.overlayId === 'custom:overlay' && (state.overlayCustomText || '').trim().length > 0);
+      el.promptIndicator.classList.toggle('modified', !!modified);
+
+      // modal fields
+      el.activeOverlayName.textContent = overlay.name;
+      el.stackTokenEstimate.textContent = `~${estimateTokens(composeSystemPrompt()).toLocaleString()}`;
+    }
+
+    function renderOverlaySelect() {
+      const groups = [];
+
+      groups.push({
+        label: 'Pro Modes',
+        items: PRO_OVERLAYS.map(o => ({ id: o.id, label: o.name }))
+      });
+
+      const packItems = [];
+      for (const pack of state.promptPacks) {
+        for (const p of (pack.prompts || [])) {
+          packItems.push({
+            id: `pack:${pack.id}:${p.id}`,
+            label: `${p.title} — ${pack.name}`
+          });
+        }
+      }
+      groups.push({
+        label: 'Community / Packs',
+        items: packItems.length ? packItems : [{ id: 'noop', label: 'No packs installed' }]
+      });
+
+      groups.push({
+        label: 'Custom',
+        items: [{ id: 'custom:overlay', label: 'Custom Overlay' }]
+      });
+
+      let html = '';
+      for (const g of groups) {
+        html += `<optgroup label="${escapeHtml(g.label)}">`;
+        for (const it of g.items) {
+          if (it.id === 'noop') {
+            html += `<option value="pro:standard" disabled>(Install packs in Power › Prompts)</option>`;
+          } else {
+            html += `<option value="${escapeHtml(it.id)}">${escapeHtml(it.label)}</option>`;
+          }
+        }
+        html += `</optgroup>`;
+      }
+
+      el.overlaySelect.innerHTML = html;
+      if ([...el.overlaySelect.options].some(o => o.value === state.overlayId)) {
+        el.overlaySelect.value = state.overlayId;
+      } else {
+        state.overlayId = 'pro:standard';
+        el.overlaySelect.value = state.overlayId;
+      }
+      refreshPromptIndicator();
+    }
+
+    // ============================================================================
+    // MARKDOWN RENDERING (sanitized)
+    // ============================================================================
+
+    function renderMarkdownSafe(text) {
+      if (!text) return '';
+      const raw = marked.parse(text);
+
+      // sanitize untrusted assistant output
+      const clean = DOMPurify.sanitize(raw, {
+        USE_PROFILES: { html: true },
+        FORBID_TAGS: ['style', 'script'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover']
+      });
+
+      // Add code block headers + copy buttons after sanitization
+      // Support languages like c++, objective-c: we whitelist [\w+-]+
+      let html = clean.replace(/<pre><code class="language-([\w+-]+)">/g, (match, lang) => {
+        const safeLang = (lang || 'code').replace(/[^\w+-]/g, '').slice(0, 24) || 'code';
+        return `<pre><div class="code-block-header"><span>${safeLang}</span><button class="copy-btn" type="button">Copy</button></div><code class="language-${safeLang}">`;
+      });
+
+      html = html.replace(
+        /<pre><code>/g,
+        '<pre><div class="code-block-header"><span>code</span><button class="copy-btn" type="button">Copy</button></div><code>'
+      );
+
+      return html;
+    }
+
+    // ============================================================================
+    // RENDERING
+    // ============================================================================
+
+    function renderCommands() {
+      let html = '';
+      for (const category of Object.values(NEXUS_COMMANDS)) {
+        html += `
+          <div class="command-category">
+            <div class="command-category-label">${escapeHtml(category.label)}</div>
+            <div class="command-list">
+              ${category.commands.map(c => `
+                <div class="command-item" data-cmd="${escapeHtml(c.cmd)}">
+                  ${escapeHtml(c.cmd)}<span class="cmd-desc">${escapeHtml(c.desc)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      el.commandsList.innerHTML = html;
+    }
+
+    function renderWelcome() {
+      el.chatMessages.innerHTML = `
+        <div class="welcome-screen">
+          <div class="welcome-logo">NEXUS</div>
+          <div class="welcome-version">v${APP_VERSION} — Kernel + Overlay, Multi-Provider Edition</div>
+          <div class="welcome-text">
+            Client-only Nexus Terminal with Tier-1 providers, prompt discovery, IndexedDB library,
+            power panels, and safe markdown rendering.
+            <br><br>
+            Paste an API key in Settings (⚙) and click <b>Test Connection</b>.
+            <br>
+            You can also type <code>/help</code> after connecting.
+          </div>
+          <div class="api-key-form">
+            <input type="password" class="api-key-input" id="welcomeApiKey" placeholder="Paste key…">
+            <button class="api-key-btn" id="welcomeConnectBtn">Connect</button>
+            <div class="api-key-error" id="welcomeError"></div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('welcomeConnectBtn').addEventListener('click', async () => {
+        const input = document.getElementById('welcomeApiKey');
+        const err = document.getElementById('welcomeError');
+        err.textContent = '';
+        const key = (input.value || '').trim();
+        if (!key) { err.textContent = 'Please paste an API key.'; return; }
+
+        // set key and auto-detect provider
+        setApiKey(key);
+        const detected = detectProviderFromKey(key);
+        if (detected) setProvider(detected, { silent: true });
+
+        const ok = await testConnection();
+        if (!ok) err.textContent = state.lastError || 'Connection failed (CORS or invalid key).';
+      });
+
+      document.getElementById('welcomeApiKey').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('welcomeConnectBtn').click();
+      });
+    }
+
+    function renderMessages() {
+      if (!state.apiKey) {
+        renderWelcome();
+        return;
+      }
+
+      const session = state.currentSession;
+      if (!session || session.messages.length === 0) {
+        el.chatMessages.innerHTML = `
+          <div class="welcome-screen">
+            <div class="welcome-logo">NEXUS</div>
+            <div class="welcome-version">v${APP_VERSION} — Ready</div>
+            <div class="welcome-text">
+              Kernel + Overlay active. Provider: <b>${escapeHtml(Providers[state.providerId].label)}</b>.
+              <br><br>
+              Try: <code>/help</code>, <code>/status</code>, or just ask something.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      el.chatMessages.innerHTML = session.messages.map(m => renderMessage(m)).join('');
+      el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    }
+
+    function renderMessage(msg) {
+      if (msg.role === 'user') {
+        return `
+          <div class="message user">
+            <div class="message-header">You</div>
+            <div class="message-content">${escapeHtml(msg.content)}</div>
+          </div>
+        `;
+      }
+
+      if (msg.role === 'system') {
+        return `
+          <div class="message system">
+            <div class="message-header">System</div>
+            <div class="message-content">${renderMarkdownSafe(msg.content)}</div>
+          </div>
+        `;
+      }
+
+      // assistant
+      let thinkingHtml = '';
+      if (msg.thinking && msg.thinking.trim()) {
+        thinkingHtml = `
+          <div class="thinking-block">
+            <div class="thinking-header" data-action="toggle-thinking">
+              <span>💭 Thinking Process</span>
+              <span class="toggle-icon">▶</span>
+            </div>
+            <div class="thinking-content">${escapeHtml(msg.thinking)}</div>
+          </div>
+        `;
+      }
+
+      const contentHtml = renderMarkdownSafe(msg.content);
+
+      return `
+        <div class="message assistant">
+          <div class="message-header">Nexus</div>
+          <div class="message-content">
+            ${thinkingHtml}
+            ${contentHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLoadingMessage() {
+      return `
+        <div class="message assistant" data-streaming="true">
+          <div class="message-header">Nexus</div>
+          <div class="message-content">
+            <div class="loading-dots"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateStatusBar() {
+      const sys = composeSystemPrompt();
+      el.systemTokens.textContent = `~${estimateTokens(sys).toLocaleString()} tokens`;
+
+      const convText = (state.currentSession?.messages || [])
+        .map(m => m.content + (m.thinking || ''))
+        .join('\n');
+      el.conversationTokens.textContent = `~${estimateTokens(convText).toLocaleString()} tokens`;
+
+      el.currentProviderDisplay.textContent = Providers[state.providerId].label + (Providers[state.providerId].tier === 2 ? ' (Tier-2)' : '');
+      el.currentModelDisplay.textContent = state.modelId || '—';
+    }
+
+    function setProviderIndicator(status) {
+      // status: 'disconnected'|'connected'|'error'
+      el.providerIndicator.classList.remove('connected', 'error');
+      if (status === 'connected') el.providerIndicator.classList.add('connected');
+      if (status === 'error') el.providerIndicator.classList.add('error');
+
+      const txt = status === 'connected' ? 'Connected' : status === 'error' ? 'Error' : 'Disconnected';
+      el.providerIndicatorText.textContent = txt;
+
+      el.inspectorConnection.textContent = txt;
+      el.inspectorLastError.textContent = state.lastError || '—';
+      el.inspectorLastLatency.textContent = state.lastLatencyMs != null ? `${Math.round(state.lastLatencyMs)} ms` : '—';
+    }
+
+    function renderPowerLists() {
+      // Sessions
+      el.sessionsList.innerHTML = (state.sessionsIndex || []).map(s => {
+        const isActive = state.currentSession?.id === s.id;
+        return `
+          <div class="list-item">
+            <div>
+              <div class="title">${escapeHtml(s.title || 'Untitled Session')}${isActive ? '  •' : ''}</div>
+              <div class="meta">Updated: ${escapeHtml(new Date(s.updatedAt).toLocaleString())}</div>
+            </div>
+            <div class="actions">
+              <button class="tiny-btn" data-action="load-session" data-id="${escapeHtml(s.id)}">Load</button>
+              <button class="tiny-btn danger" data-action="delete-session" data-id="${escapeHtml(s.id)}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="hint">No sessions found.</div>`;
+
+      // Artifacts
+      el.artifactsList.innerHTML = (state.artifactsIndex || []).map(a => {
+        return `
+          <div class="list-item">
+            <div>
+              <div class="title">${escapeHtml(a.title || a.type || 'Artifact')}</div>
+              <div class="meta">${escapeHtml(a.type)} • ${escapeHtml(new Date(a.createdAt).toLocaleString())}</div>
+            </div>
+            <div class="actions">
+              <button class="tiny-btn" data-action="view-artifact" data-id="${escapeHtml(a.id)}">View</button>
+              <button class="tiny-btn danger" data-action="delete-artifact" data-id="${escapeHtml(a.id)}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="hint">No artifacts yet.</div>`;
+
+      // Prompt packs
+      el.promptPacksList.innerHTML = (state.promptPacks || []).map(p => {
+        const count = (p.prompts || []).length;
+        return `
+          <div class="list-item">
+            <div>
+              <div class="title">${escapeHtml(p.name)} <span style="color:var(--text-muted); font-size:10px;">(${escapeHtml(p.source)})</span></div>
+              <div class="meta">${escapeHtml(p.description || '')} • ${count} prompts</div>
+            </div>
+            <div class="actions">
+              <button class="tiny-btn danger" data-action="uninstall-pack" data-id="${escapeHtml(p.id)}">Uninstall</button>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="hint">No packs installed. Refresh discovery or install curated packs.</div>`;
+
+      // Tasks
+      renderTasksList();
+    }
+
+    function renderTasksList() {
+      const tasks = state.currentSession?.tasks || [];
+      el.tasksList.innerHTML = tasks.map(t => {
+        const next = t.nextRunAt ? new Date(t.nextRunAt).toLocaleString() : '—';
+        return `
+          <div class="list-item">
+            <div>
+              <div class="title">${escapeHtml(t.title)}</div>
+              <div class="meta">${escapeHtml(t.schedule)} • Next: ${escapeHtml(next)} • ${t.enabled ? 'Enabled' : 'Disabled'}</div>
+            </div>
+            <div class="actions">
+              <button class="tiny-btn" data-action="toggle-task" data-id="${escapeHtml(t.id)}">${t.enabled ? 'Disable' : 'Enable'}</button>
+              <button class="tiny-btn danger" data-action="delete-task" data-id="${escapeHtml(t.id)}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="hint">No tasks yet.</div>`;
+    }
+
+    // ============================================================================
+    // SETTINGS PERSISTENCE (IndexedDB)
+    // ============================================================================
+
+    async function loadSettings() {
+      const saved = await db.get('settings', 'default');
+      if (!saved) return;
+
+      state.providerId = saved.providerId || state.providerId;
+      state.modelId = saved.modelId || state.modelId;
+      state.temperature = typeof saved.temperature === 'number' ? saved.temperature : state.temperature;
+      state.maxTokens = typeof saved.maxTokens === 'number' ? saved.maxTokens : state.maxTokens;
+      state.thinkingBudget = typeof saved.thinkingBudget === 'number' ? saved.thinkingBudget : state.thinkingBudget;
+
+      state.sidebarCollapsed = !!saved.sidebarCollapsed;
+      state.collapsedSections = saved.collapsedSections || {};
+
+      state.kernelPrompt = saved.kernelPrompt || state.kernelPrompt;
+      state.kernelModified = !!saved.kernelModified;
+
+      state.overlayId = saved.overlayId || state.overlayId;
+      state.overlayCustomText = saved.overlayCustomText || state.overlayCustomText;
+      state.overlayModified = !!saved.overlayModified;
+
+      state.githubDiscoveryUrl = saved.githubDiscoveryUrl || state.githubDiscoveryUrl;
+
+      state.baseUrlOverride = saved.baseUrlOverride || '';
+      state.openrouterReferer = saved.openrouterReferer || '';
+      state.openrouterTitle = saved.openrouterTitle || '';
+
+      // Load session id if exists
+      const lastSessionId = saved.lastSessionId || null;
+      if (lastSessionId) {
+        const s = await db.get('sessions', lastSessionId);
+        if (s) state.currentSession = s;
+      }
+    }
+
+    async function saveSettings() {
+      const payload = {
+        id: 'default',
+        providerId: state.providerId,
+        modelId: state.modelId,
+        temperature: state.temperature,
+        maxTokens: state.maxTokens,
+        thinkingBudget: state.thinkingBudget,
+
+        sidebarCollapsed: state.sidebarCollapsed,
+        collapsedSections: state.collapsedSections,
+
+        kernelPrompt: state.kernelPrompt,
+        kernelModified: state.kernelModified,
+
+        overlayId: state.overlayId,
+        overlayCustomText: state.overlayCustomText,
+        overlayModified: state.overlayModified,
+
+        githubDiscoveryUrl: state.githubDiscoveryUrl,
+
+        baseUrlOverride: state.baseUrlOverride,
+        openrouterReferer: state.openrouterReferer,
+        openrouterTitle: state.openrouterTitle,
+
+        lastSessionId: state.currentSession?.id || null
+      };
+      await db.put('settings', payload);
+    }
+
+    // ============================================================================
+    // PROMPT PACKS (stored in IndexedDB)
+    // ============================================================================
+
+    async function loadPromptPacks() {
+      // Start with curated packs (bundled), then merge installed packs
+      const installed = await db.list('promptPacks', { index: 'name', direction: 'next', limit: 200 });
+      const merged = [];
+
+      // Curated first (not stored)
+      for (const p of CURATED_PROMPT_PACKS) merged.push(p);
+
+      // Installed next (avoid ID collisions with curated)
+      for (const p of installed) {
+        if (!merged.some(x => x.id === p.id)) merged.push(p);
+      }
+
+      state.promptPacks = merged;
+    }
+
+    async function installPromptPack(pack) {
+      // only persist non-curated packs
+      if (pack.source === 'curated') return;
+      await db.put('promptPacks', pack);
+      await loadPromptPacks();
+      renderOverlaySelect();
+      renderPowerLists();
+    }
+
+    async function uninstallPromptPack(packId) {
+      // curated can't be removed
+      const curated = CURATED_PROMPT_PACKS.some(p => p.id === packId);
+      if (curated) return;
+      await db.delete('promptPacks', packId);
+      await loadPromptPacks();
+
+      // If active overlay was from this pack, revert to pro:standard
+      if ((state.overlayId || '').startsWith(`pack:${packId}:`)) {
+        state.overlayId = 'pro:standard';
+      }
+
+      await saveSettings();
+      renderOverlaySelect();
+      refreshPromptIndicator();
+      renderPowerLists();
+    }
+
+    // ============================================================================
+    // DISCOVERY SYSTEM (GitHub static JSON + cache)
+    // ============================================================================
+
+    function validatePromptPackShape(pack) {
+      if (!pack || typeof pack !== 'object') return false;
+      if (!pack.id || !pack.name) return false;
+      if (!Array.isArray(pack.prompts)) return false;
+      for (const p of pack.prompts) {
+        if (!p.id || !p.title || typeof p.body !== 'string') return false;
+      }
+      return true;
+    }
+
+    async function refreshDiscovery() {
+      const url = (state.githubDiscoveryUrl || '').trim();
+      if (!url) { state.discoveryStatus = 'No URL provided.'; syncDiscoveryStatus(); return; }
+
+      state.discoveryStatus = 'Fetching…';
+      syncDiscoveryStatus();
+
+      try {
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const json = await res.json();
+
+        // Accept shapes:
+        // 1) { packs: [...] }
+        // 2) [ ...packs ]
+        const packs = Array.isArray(json) ? json : Array.isArray(json?.packs) ? json.packs : null;
+        if (!packs) throw new Error('Invalid schema (expected array of packs or {packs:[]}).');
+
+        const accepted = [];
+        const rejected = [];
+
+        for (const rawPack of packs) {
+          const pack = {
+            id: rawPack.id || `github:${uuid()}`,
+            source: 'github',
+            name: rawPack.name || 'Unnamed Pack',
+            description: rawPack.description || '',
+            author: rawPack.author || '',
+            version: rawPack.version || '',
+            prompts: Array.isArray(rawPack.prompts) ? rawPack.prompts.map(p => ({
+              id: p.id || uuid(),
+              title: p.title || 'Untitled Prompt',
+              tags: Array.isArray(p.tags) ? p.tags : [],
+              body: typeof p.body === 'string' ? p.body : ''
+            })) : []
+          };
+
+          if (validatePromptPackShape(pack)) accepted.push(pack);
+          else rejected.push(pack.name);
+        }
+
+        // cache it
+        await db.put('promptCache', { url, lastFetchedAt: nowISO(), raw: json });
+
+        // install accepted packs (as persisted)
+        for (const p of accepted) await installPromptPack(p);
+
+        state.discoveryStatus = `Refreshed. Installed: ${accepted.length}. Rejected: ${rejected.length}.`;
+        syncDiscoveryStatus();
+        toast(`<b>Discovery</b> refreshed. Installed ${accepted.length} pack(s).`);
+      } catch (e) {
+        state.discoveryStatus = `Error: ${e.message}`;
+        syncDiscoveryStatus();
+        toast(`<b>Discovery</b> failed: ${escapeHtml(e.message)}`, 3200);
+      }
+    }
+
+    async function clearDiscoveryCache() {
+      const url = (state.githubDiscoveryUrl || '').trim();
+      if (!url) return;
+      await db.delete('promptCache', url);
+      state.discoveryStatus = 'Cache cleared.';
+      syncDiscoveryStatus();
+      toast('<b>Discovery</b> cache cleared.');
+    }
+
+    function syncDiscoveryStatus() {
+      el.discoveryStatus.textContent = state.discoveryStatus;
+    }
+
+    // ============================================================================
+    // SESSION MANAGEMENT (IndexedDB)
+    // ============================================================================
+
+    function makeNewSession() {
+      const id = uuid();
+      const createdAt = nowISO();
+      return {
+        id,
+        title: `Session ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`,
+        createdAt,
+        updatedAt: createdAt,
+        providerSnapshot: { providerId: state.providerId, modelId: state.modelId },
+        promptSnapshot: { overlayId: state.overlayId, kernelHash: hashString(state.kernelPrompt) },
+        messages: [],
+        tasks: [],
+        kernelState: { decisions: [], claims: [], risks: [], loops: [] },
+        stats: { messageCount: 0 }
+      };
+    }
+
+    async function saveCurrentSession() {
+      if (!state.currentSession) return;
+      state.currentSession.updatedAt = nowISO();
+      state.currentSession.providerSnapshot = { providerId: state.providerId, modelId: state.modelId };
+      state.currentSession.promptSnapshot = { overlayId: state.overlayId, kernelHash: hashString(state.kernelPrompt) };
+      state.currentSession.stats.messageCount = state.currentSession.messages.length;
+      await db.put('sessions', state.currentSession);
+      await refreshLibraryIndexes();
+      await saveSettings();
+    }
+
+    async function refreshLibraryIndexes() {
+      state.sessionsIndex = await db.list('sessions', { index: 'updatedAt', direction: 'prev', limit: 50 });
+      state.artifactsIndex = await db.list('artifacts', { index: 'createdAt', direction: 'prev', limit: 50 });
+      renderPowerLists();
+    }
+
+    async function startNewSession({ silent = false } = {}) {
+      if (state.currentSession?.messages?.length && !silent) {
+        if (!confirm('Start a new session? Current messages will remain saved in the Library.')) return;
+      }
+      state.currentSession = makeNewSession();
+      await saveCurrentSession();
+      renderMessages();
+      updateStatusBar();
+      toast('<b>New session</b> created.');
+    }
+
+    async function clearSession() {
+      if (!state.currentSession) return;
+      if (!confirm('Clear all messages in this session? (Session remains)')) return;
+      state.currentSession.messages = [];
+      await saveCurrentSession();
+      renderMessages();
+      updateStatusBar();
+      toast('<b>Session</b> cleared.');
+    }
+
+    async function deleteSession(sessionId) {
+      if (!confirm('Delete this session from IndexedDB?')) return;
+      await db.delete('sessions', sessionId);
+
+      // if deleting active session, start new
+      if (state.currentSession?.id === sessionId) {
+        state.currentSession = null;
+        await startNewSession({ silent: true });
+      } else {
+        await refreshLibraryIndexes();
+      }
+      toast('<b>Session</b> deleted.');
+    }
+
+    async function loadSession(sessionId) {
+      const s = await db.get('sessions', sessionId);
+      if (!s) return;
+      state.currentSession = s;
+      await saveSettings();
+      renderMessages();
+      updateStatusBar();
+      toast('<b>Loaded</b> session.');
+    }
+
+    function exportSession() {
+      if (!state.currentSession) return;
+
+      const exportData = {
+        app: 'Nexus Terminal',
+        version: APP_VERSION,
+        exportedAt: nowISO(),
+        provider: { providerId: state.providerId, modelId: state.modelId },
+        promptStack: { kernel: state.kernelPrompt, overlayId: state.overlayId, overlayCustomText: state.overlayCustomText || '' },
+        session: state.currentSession
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nexus-session-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('<b>Export</b> started.');
+    }
+
+    function validateImportedSession(data) {
+      if (!data || typeof data !== 'object') return false;
+      if (!data.session || typeof data.session !== 'object') return false;
+      if (!Array.isArray(data.session.messages)) return false;
+      return true;
+    }
+
+    function importSessionFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!validateImportedSession(data)) throw new Error('Invalid session file schema.');
+
+          // load prompt stack snapshot (safe; no secrets)
+          if (data.promptStack?.kernel) {
+            state.kernelPrompt = String(data.promptStack.kernel);
+            state.kernelModified = state.kernelPrompt !== NEXUS_KERNEL_DEFAULT;
+          }
+          if (data.promptStack?.overlayId) {
+            state.overlayId = String(data.promptStack.overlayId);
+            state.overlayCustomText = String(data.promptStack.overlayCustomText || '');
+          }
+
+          // load session
+          state.currentSession = data.session;
+          if (!state.currentSession.id) state.currentSession.id = uuid();
+          state.currentSession.updatedAt = nowISO();
+
+          await saveCurrentSession();
+          await loadPromptPacks();
+          renderOverlaySelect();
+          refreshPromptIndicator();
+          renderMessages();
+          updateStatusBar();
+
+          toast('<b>Import</b> successful.');
+        } catch (err) {
+          alert('Invalid session file: ' + err.message);
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ============================================================================
+    // ARTIFACTS
+    // ============================================================================
+
+    async function createSnapshotArtifact() {
+      if (!state.currentSession) return;
+
+      const artifact = {
+        id: uuid(),
+        type: 'snapshot',
+        title: `Snapshot — ${new Date().toLocaleString()}`,
+        createdAt: nowISO(),
+        linkedSessionId: state.currentSession.id,
+        content: {
+          provider: { providerId: state.providerId, modelId: state.modelId },
+          promptStack: { kernelHash: hashString(state.kernelPrompt), overlayId: state.overlayId },
+          sessionSummary: {
+            messageCount: state.currentSession.messages.length,
+            tasksCount: state.currentSession.tasks.length
+          },
+          session: state.currentSession
+        }
+      };
+
+      await db.put('artifacts', artifact);
+      await refreshLibraryIndexes();
+      toast('<b>Snapshot</b> saved in Library.');
+    }
+
+    async function viewArtifact(artifactId) {
+      const a = await db.get('artifacts', artifactId);
+      if (!a) return;
+      const blob = new Blob([JSON.stringify(a, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 20000);
+    }
+
+    async function deleteArtifact(artifactId) {
+      if (!confirm('Delete this artifact?')) return;
+      await db.delete('artifacts', artifactId);
+      await refreshLibraryIndexes();
+      toast('<b>Artifact</b> deleted.');
+    }
+
+    // ============================================================================
+    // TASKS (Client-only scheduling stubs)
+    // ============================================================================
+
+    function computeNextRun(schedule) {
+      const now = new Date();
+      if (schedule === 'hourly') {
+        return new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+      }
+      if (schedule === 'once') {
+        return new Date(now.getTime() + 5 * 60 * 1000).toISOString();
+      }
+      // daily at next 09:00 local
+      const next = new Date(now);
+      next.setHours(9, 0, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      return next.toISOString();
+    }
+
+    async function addTask(title, schedule) {
+      if (!state.currentSession) return;
+      const t = {
+        id: uuid(),
+        title: title.trim(),
+        schedule,
+        enabled: true,
+        nextRunAt: computeNextRun(schedule)
+      };
+      state.currentSession.tasks.push(t);
+      await saveCurrentSession();
+      renderTasksList();
+      toast('<b>Task</b> added.');
+    }
+
+    async function toggleTask(taskId) {
+      const tasks = state.currentSession?.tasks || [];
+      const t = tasks.find(x => x.id === taskId);
+      if (!t) return;
+      t.enabled = !t.enabled;
+      if (t.enabled && !t.nextRunAt) t.nextRunAt = computeNextRun(t.schedule);
+      await saveCurrentSession();
+      renderTasksList();
+    }
+
+    async function deleteTask(taskId) {
+      const tasks = state.currentSession?.tasks || [];
+      state.currentSession.tasks = tasks.filter(x => x.id !== taskId);
+      await saveCurrentSession();
+      renderTasksList();
+      toast('<b>Task</b> deleted.');
+    }
+
+    function scheduleNext(task) {
+      if (task.schedule === 'once') {
+        task.enabled = false;
+        task.nextRunAt = null;
+        return;
+      }
+      task.nextRunAt = computeNextRun(task.schedule);
+    }
+
+    async function runTaskLoopTick() {
+      const tasks = state.currentSession?.tasks || [];
+      const now = Date.now();
+      let fired = 0;
+
+      for (const t of tasks) {
+        if (!t.enabled || !t.nextRunAt) continue;
+        const due = new Date(t.nextRunAt).getTime();
+        if (Number.isFinite(due) && due <= now) {
+          fired++;
+          // add a system message reminder
+          state.currentSession.messages.push({
+            role: 'system',
+            content: `⏰ **Task Reminder:** ${t.title}\n\n_(Client-only: runs only while this page is open.)_`
+          });
+          scheduleNext(t);
+        }
+      }
+
+      if (fired > 0) {
+        await saveCurrentSession();
+        renderMessages();
+        updateStatusBar();
+        toast(`<b>Tasks</b>: ${fired} reminder(s).`);
+      }
+    }
+
+    function startTaskTimer() {
+      if (state.taskTimer) clearInterval(state.taskTimer);
+      state.taskTimer = setInterval(runTaskLoopTick, 15000);
+    }
+
+    // ============================================================================
+    // CONNECTION + API KEY HANDLING (memory default; sessionStorage opt-in)
+    // ============================================================================
+
+    function setApiKey(newKey) {
+      state.apiKey = (newKey || '').trim();
+      el.apiKeyInput.value = state.apiKey;
+
+      // sessionStorage opt-in
+      const optin = el.persistKeyCheckbox.checked;
+      sessionStorage.setItem(SESSION_KEY_OPTIN, optin ? '1' : '0');
+      if (optin && state.apiKey) sessionStorage.setItem(SESSION_KEY_STORAGE, state.apiKey);
+      if (!optin) sessionStorage.removeItem(SESSION_KEY_STORAGE);
+
+      // auto-detect provider (best-effort)
+      const detected = detectProviderFromKey(state.apiKey);
+      if (detected) setProvider(detected, { silent: true });
+
+      state.connected = false;
+      setProviderIndicator('disconnected');
+    }
+
+    function clearApiKey() {
+      state.apiKey = '';
+      el.apiKeyInput.value = '';
+      state.connected = false;
+      setProviderIndicator('disconnected');
+      sessionStorage.removeItem(SESSION_KEY_STORAGE);
+      toast('<b>Key</b> cleared.');
+      renderMessages();
+    }
+
+    function lockTerminal() {
+      // Clear key and return to welcome view
+      clearApiKey();
+      toast('<b>Locked</b>. Paste a key to continue.');
+    }
+
+    // ============================================================================
+    // PROVIDER + MODEL
+    // ============================================================================
+
+    function setProvider(providerId, { silent = false } = {}) {
+      if (!Providers[providerId]) return;
+      state.providerId = providerId;
+      el.providerSelect.value = providerId;
+
+      // if model not set or doesn't look right, set default
+      const defaults = Providers[providerId].defaultModels;
+      if (!state.modelId || !defaults.includes(state.modelId)) {
+        state.modelId = defaults[0] || state.modelId;
+      }
+      el.modelInput.value = state.modelId;
+
+      renderModelDatalist();
+      updateStatusBar();
+      if (!silent) toast(`<b>Provider</b> set to ${escapeHtml(Providers[providerId].label)}.`);
+      saveSettings();
+    }
+
+    function setModel(modelId) {
+      state.modelId = (modelId || '').trim();
+      el.modelInput.value = state.modelId;
+      updateStatusBar();
+      saveSettings();
+    }
+
+    function renderModelDatalist() {
+      const models = Providers[state.providerId].defaultModels || [];
+      el.modelDatalist.innerHTML = models.map(m => `<option value="${escapeHtml(m)}"></option>`).join('');
+    }
+
+    // ============================================================================
+    // LOCAL COMMAND ROUTER
+    // ============================================================================
+
+    async function handleLocalCommand(input) {
+      const cmd = input.trim();
+
+      if (cmd === '/help') {
+        const lines = [];
+        lines.push('### Nexus Terminal Quick Reference');
+        lines.push('');
+        lines.push('**Local commands (handled by the terminal):**');
+        lines.push('- `/help` — show this message');
+        lines.push('- `/status` — session/provider/prompt status');
+        lines.push('- `/snapshot` — save a snapshot artifact');
+        lines.push('- `/state` — kernel state stub');
+        lines.push('- `/tick daily` — create a daily reminder task (client-only)');
+        lines.push('');
+        lines.push('**Model-facing commands (sent to the model):**');
+        lines.push('- `/plan`, `/research`, `/redteam`, `/merge`, `/impact`, `/drift check`');
+        addSystemMessage(lines.join('\n'));
+        return true;
+      }
+
+      if (cmd === '/status') {
+        const overlay = getOverlayById(state.overlayId);
+        const s = state.currentSession;
+        const lines = [];
+        lines.push('### Status');
+        lines.push(`- Provider: **${Providers[state.providerId].label}**`);
+        lines.push(`- Model: **${state.modelId || '—'}**`);
+        lines.push(`- Connected: **${state.connected ? 'yes' : 'no'}**`);
+        lines.push(`- Prompt: **Kernel + ${overlay.name}**`);
+        lines.push(`- Messages: **${s?.messages?.length || 0}**`);
+        lines.push(`- Tasks: **${s?.tasks?.length || 0}** _(client-only)_`);
+        addSystemMessage(lines.join('\n'));
+        return true;
+      }
+
+      if (cmd === '/snapshot') {
+        await createSnapshotArtifact();
+        addSystemMessage('✅ Snapshot saved to **Power › Library**.');
+        return true;
+      }
+
+      if (cmd === '/state') {
+        const ks = state.currentSession?.kernelState || { decisions: [], claims: [], risks: [], loops: [] };
+        addSystemMessage('```json\n' + JSON.stringify(ks, null, 2) + '\n```');
+        return true;
+      }
+
+      if (cmd === '/tick daily') {
+        await addTask('Daily Nexus tick (/status ritual)', 'daily');
+        addSystemMessage('✅ Task created: **Daily Nexus tick** (runs only while this page is open).');
+        return true;
+      }
+
+      return false;
+    }
+
+    function addSystemMessage(markdown) {
+      if (!state.currentSession) return;
+      state.currentSession.messages.push({ role: 'system', content: markdown });
+      saveCurrentSession();
+      renderMessages();
+      updateStatusBar();
+    }
+
+    // ============================================================================
+    // STREAMING API CALLS (normalized deltas + AbortController)
+    // ============================================================================
+
+    async function testConnection() {
+      if (!state.apiKey) {
+        toast('<b>Missing key</b>. Paste an API key first.', 2600);
+        return false;
+      }
+
+      state.lastError = '';
+      setProviderIndicator('disconnected');
+
+      try {
+        const provider = Providers[state.providerId];
+        const t0 = performance.now();
+
+        // Use a tiny request to validate key + CORS.
+        const composed = composeSystemPrompt();
+        const messages = [{ role: 'user', content: 'Hi' }];
+
+        let request;
+        if (provider.id === 'anthropic') {
+          request = provider.buildRequest({
+            apiKey: state.apiKey,
+            baseUrl: state.baseUrlOverride,
+            model: state.modelId,
+            systemPrompt: composed,
+            messages,
+            temperature: state.temperature,
+            maxTokens: 8,
+            thinkingBudget: 0
+          });
+        } else {
+          request = provider.buildRequest({
+            apiKey: state.apiKey,
+            baseUrl: state.baseUrlOverride,
+            model: state.modelId,
+            systemPrompt: composed,
+            messages,
+            temperature: state.temperature,
+            maxTokens: 8,
+            openrouterReferer: state.openrouterReferer,
+            openrouterTitle: state.openrouterTitle
+          });
+        }
+
+        const res = await fetch(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: JSON.stringify(request.body)
+        });
+
+        if (!res.ok) {
+          let msg = `HTTP ${res.status}`;
+          try {
+            const j = await res.json();
+            msg = j?.error?.message || j?.message || msg;
+          } catch {}
+          throw new Error(msg);
+        }
+
+        // If streaming, just read a little then cancel.
+        // Some providers won't return anything immediately; still ok.
+        if (res.body) {
+          const reader = res.body.getReader();
+          try {
+            await reader.read();
+          } catch {}
+          try { reader.cancel(); } catch {}
+        }
+
+        state.connected = true;
+        state.lastLatencyMs = performance.now() - t0;
+        setProviderIndicator('connected');
+        toast('<b>Connected</b>. Ready.');
+        return true;
+      } catch (e) {
+        state.connected = false;
+        state.lastError = e.message || String(e);
+        setProviderIndicator('error');
+        toast(`<b>Connection failed</b>: ${escapeHtml(state.lastError)}`, 3600);
+        return false;
+      } finally {
+        el.inspectorLastError.textContent = state.lastError || '—';
+        el.inspectorLastLatency.textContent = state.lastLatencyMs != null ? `${Math.round(state.lastLatencyMs)} ms` : '—';
+      }
+    }
+
+    async function sendMessage() {
+      const text = (el.messageInput.value || '').trim();
+      if (!text || state.isLoading) return;
+
+      if (!state.apiKey) {
+        toast('<b>Missing key</b>. Paste an API key first.', 2600);
+        return;
+      }
+
+      // local commands
+      if (text.startsWith('/')) {
+        const handled = await handleLocalCommand(text);
+        if (handled) {
+          el.messageInput.value = '';
+          el.messageInput.style.height = 'auto';
+          return;
+        }
+      }
+
+      // push user message
+      state.currentSession.messages.push({ role: 'user', content: text });
+      el.messageInput.value = '';
+      el.messageInput.style.height = 'auto';
+
+      renderMessages();
+      updateStatusBar();
+
+      // begin streaming
+      state.isLoading = true;
+      el.sendBtn.disabled = true;
+      el.stopBtn.disabled = false;
+
+      el.chatMessages.innerHTML += renderLoadingMessage();
+      el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+
+      const controller = new AbortController();
+      state.abortController = controller;
+
+      const provider = Providers[state.providerId];
+      const composedSystemPrompt = composeSystemPrompt();
+
+      const apiMessages = state.currentSession.messages
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role, content: m.content }));
+
+      let request;
+      if (provider.id === 'anthropic') {
+        request = provider.buildRequest({
+          apiKey: state.apiKey,
+          baseUrl: state.baseUrlOverride,
+          model: state.modelId,
+          systemPrompt: composedSystemPrompt,
+          messages: apiMessages,
+          temperature: state.temperature,
+          maxTokens: state.maxTokens,
+          thinkingBudget: state.thinkingBudget
+        });
+      } else {
+        request = provider.buildRequest({
+          apiKey: state.apiKey,
+          baseUrl: state.baseUrlOverride,
+          model: state.modelId,
+          systemPrompt: composedSystemPrompt,
+          messages: apiMessages,
+          temperature: state.temperature,
+          maxTokens: state.maxTokens,
+          openrouterReferer: state.openrouterReferer,
+          openrouterTitle: state.openrouterTitle
+        });
+      }
+
+      const assistant = { role: 'assistant', content: '', thinking: '' };
+
+      try {
+        const t0 = performance.now();
+        const res = await fetch(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: JSON.stringify(request.body),
+          signal: controller.signal
+        });
+
+        if (!res.ok) {
+          let msg = `HTTP ${res.status}`;
+          try {
+            const j = await res.json();
+            msg = j?.error?.message || j?.message || msg;
+          } catch {}
+          throw new Error(msg);
+        }
+
+        state.connected = true;
+        setProviderIndicator('connected');
+
+        await handleStreamingResponse(res, provider, assistant);
+
+        state.lastLatencyMs = performance.now() - t0;
+        el.inspectorLastLatency.textContent = `${Math.round(state.lastLatencyMs)} ms`;
+        el.inspectorLastError.textContent = '—';
+
+        state.currentSession.messages.push(assistant);
+        await saveCurrentSession();
+      } catch (e) {
+        const aborted = e?.name === 'AbortError';
+        if (aborted) {
+          // If stopped mid-stream, persist partial if any
+          if (assistant.content || assistant.thinking) {
+            state.currentSession.messages.push(assistant);
+          }
+          state.currentSession.messages.push({
+            role: 'system',
+            content: '⛔ Generation stopped.'
+          });
+          toast('<b>Stopped</b>.');
+        } else {
+          state.lastError = e.message || String(e);
+          setProviderIndicator('error');
+          state.currentSession.messages.push({
+            role: 'assistant',
+            content: `Error: ${state.lastError}`
+          });
+          el.inspectorLastError.textContent = state.lastError;
+          toast(`<b>Error</b>: ${escapeHtml(state.lastError)}`, 3600);
+        }
+        await saveCurrentSession();
+      } finally {
+        state.isLoading = false;
+        el.sendBtn.disabled = false;
+        el.stopBtn.disabled = true;
+        state.abortController = null;
+
+        renderMessages();
+        updateStatusBar();
+      }
+    }
+
+    async function handleStreamingResponse(response, provider, assistant) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (!data || data === '[DONE]') continue;
+
+          const deltas = provider.parseSSEData(data) || [];
+          for (const d of deltas) {
+            if (d.type === 'thinking') assistant.thinking += d.value;
+            if (d.type === 'text') assistant.content += d.value;
+          }
+
+          updateStreamingMessage(assistant);
+        }
+      }
+    }
+
+    function updateStreamingMessage(msg) {
+      const nodes = el.chatMessages.querySelectorAll('.message.assistant[data-streaming="true"]');
+      const last = nodes[nodes.length - 1];
+      if (!last) return;
+
+      let thinkingHtml = '';
+      if (msg.thinking && msg.thinking.trim()) {
+        thinkingHtml = `
+          <div class="thinking-block">
+            <div class="thinking-header" data-action="toggle-thinking">
+              <span>💭 Thinking Process</span>
+              <span class="toggle-icon">▶</span>
+            </div>
+            <div class="thinking-content">${escapeHtml(msg.thinking)}</div>
+          </div>
+        `;
+      }
+
+      last.querySelector('.message-content').innerHTML = thinkingHtml + renderMarkdownSafe(msg.content);
+      el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    }
+
+    function stopStreaming() {
+      if (state.abortController) {
+        state.abortController.abort();
+      }
+    }
+
+    // ============================================================================
+    // HASH (for prompt snapshot)
+    // ============================================================================
+
+    function hashString(str) {
+      // fast non-crypto hash for change detection
+      let h = 2166136261;
+      for (let i = 0; i < (str || '').length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(16);
+    }
+
+    // ============================================================================
+    // POWER MODAL TABS + PROMPT STACK MODAL TABS
+    // ============================================================================
+
+    function setupModalTabs() {
+      // Prompt stack modal tabs
+      document.querySelectorAll('#promptStackModal .tab-btn[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#promptStackModal .tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = btn.dataset.tab;
+          document.querySelectorAll('#promptStackModal .panel').forEach(p => p.classList.remove('visible'));
+          document.getElementById(`tab-${tab}`).classList.add('visible');
+
+          // sync preview
+          if (tab === 'preview') {
+            el.previewTextarea.value = composeSystemPrompt();
+          }
+        });
+      });
+
+      // Power modal tabs
+      document.querySelectorAll('#powerModal .tab-btn[data-ptab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#powerModal .tab-btn[data-ptab]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = btn.dataset.ptab;
+          document.querySelectorAll('#powerModal .panel').forEach(p => p.classList.remove('visible'));
+          document.getElementById(`ptab-${tab}`).classList.add('visible');
+        });
+      });
+    }
+
+    // ============================================================================
+    // EVENT HANDLERS
+    // ============================================================================
+
+    function setupEventListeners() {
+      el.menuToggle.addEventListener('click', async () => {
+        state.sidebarCollapsed = !state.sidebarCollapsed;
+        el.sidebar.classList.toggle('collapsed', state.sidebarCollapsed);
+        await saveSettings();
+      });
+
+      el.settingsToggle.addEventListener('click', () => {
+        el.settingsPanel.classList.toggle('visible');
+      });
+
+      el.helpBtn.addEventListener('click', () => {
+        el.messageInput.value = '/help ';
+        el.messageInput.focus();
+      });
+
+      el.powerBtn.addEventListener('click', () => {
+        el.powerModal.classList.add('visible');
+        renderPowerLists();
+      });
+
+      el.closePowerModal.addEventListener('click', () => el.powerModal.classList.remove('visible'));
+      el.powerModal.addEventListener('click', (e) => {
+        if (e.target === el.powerModal) el.powerModal.classList.remove('visible');
+      });
+
+      el.promptIndicator.addEventListener('click', () => {
+        openPromptStackModal({ focus: 'stack' });
+      });
+
+      el.viewPromptStackBtn.addEventListener('click', () => openPromptStackModal({ focus: 'preview' }));
+
+      el.editOverlayBtn.addEventListener('click', () => openPromptStackModal({ focus: 'overlay' }));
+
+      el.discoverPromptsBtn.addEventListener('click', () => {
+        el.powerModal.classList.add('visible');
+        // switch to prompts tab
+        document.querySelectorAll('#powerModal .tab-btn[data-ptab]').forEach(b => b.classList.remove('active'));
+        document.querySelector('#powerModal .tab-btn[data-ptab="prompts"]').classList.add('active');
+        document.querySelectorAll('#powerModal .panel').forEach(p => p.classList.remove('visible'));
+        document.getElementById('ptab-prompts').classList.add('visible');
+        renderPowerLists();
+      });
+
+      el.closePromptStackModal.addEventListener('click', () => closePromptStackModal());
+      el.promptStackModal.addEventListener('click', (e) => {
+        if (e.target === el.promptStackModal) closePromptStackModal();
+      });
+
+      el.apiKeyInput.addEventListener('input', (e) => {
+        // do not auto-test; just set + detect
+        setApiKey(e.target.value);
+        updateSecurityStatus();
+        renderMessages();
+      });
+
+      el.providerSelect.addEventListener('change', (e) => setProvider(e.target.value));
+      el.modelInput.addEventListener('change', (e) => setModel(e.target.value));
+
+      el.temperatureInput.addEventListener('change', async (e) => {
+        state.temperature = parseFloat(e.target.value);
+        await saveSettings();
+      });
+
+      el.maxTokensInput.addEventListener('change', async (e) => {
+        state.maxTokens = parseInt(e.target.value, 10);
+        await saveSettings();
+      });
+
+      el.thinkingBudgetInput.addEventListener('change', async (e) => {
+        state.thinkingBudget = parseInt(e.target.value, 10);
+        await saveSettings();
+      });
+
+      el.testConnectionBtn.addEventListener('click', testConnection);
+
+      el.clearKeyBtn.addEventListener('click', clearApiKey);
+
+      el.overlaySelect.addEventListener('change', async (e) => {
+        state.overlayId = e.target.value;
+        refreshPromptIndicator();
+        updateStatusBar();
+        await saveSettings();
+      });
+
+      el.kernelTextarea.addEventListener('input', () => {
+        // just allow editing; will mark modified on save
+      });
+
+      el.overlayTextarea.addEventListener('input', () => {
+        // no-op
+      });
+
+      el.resetKernelBtn.addEventListener('click', () => {
+        if (!confirm('Reset Kernel to default?')) return;
+        state.kernelPrompt = NEXUS_KERNEL_DEFAULT;
+        state.kernelModified = false;
+        el.kernelTextarea.value = state.kernelPrompt;
+        refreshPromptIndicator();
+        updateStatusBar();
+        saveSettings();
+        toast('<b>Kernel</b> reset.');
+      });
+
+      el.saveKernelBtn.addEventListener('click', async () => {
+        state.kernelPrompt = el.kernelTextarea.value || '';
+        state.kernelModified = state.kernelPrompt !== NEXUS_KERNEL_DEFAULT;
+        refreshPromptIndicator();
+        updateStatusBar();
+        await saveSettings();
+        toast('<b>Kernel</b> saved.');
+      });
+
+      el.resetOverlayBtn.addEventListener('click', () => {
+        const o = getOverlayById(state.overlayId);
+        el.overlayTextarea.value = o.body || '';
+        toast('<b>Overlay</b> reverted.');
+      });
+
+      el.saveOverlayBtn.addEventListener('click', async () => {
+        const txt = (el.overlayTextarea.value || '').trim();
+        state.overlayCustomText = txt;
+        state.overlayId = 'custom:overlay';
+        state.overlayModified = true;
+        renderOverlaySelect();
+        refreshPromptIndicator();
+        updateStatusBar();
+        await saveSettings();
+        toast('<b>Custom overlay</b> saved & applied.');
+      });
+
+      el.newSessionBtn.addEventListener('click', () => startNewSession());
+      el.exportSessionBtn.addEventListener('click', exportSession);
+      el.importSessionBtn.addEventListener('click', () => el.importFileInput.click());
+      el.importFileInput.addEventListener('change', importSessionFile);
+      el.clearSessionBtn.addEventListener('click', clearSession);
+
+      el.createSnapshotBtn.addEventListener('click', createSnapshotArtifact);
+
+      el.sendBtn.addEventListener('click', sendMessage);
+      el.stopBtn.addEventListener('click', stopStreaming);
+
+      el.messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      el.messageInput.addEventListener('input', () => {
+        el.messageInput.style.height = 'auto';
+        el.messageInput.style.height = Math.min(el.messageInput.scrollHeight, 200) + 'px';
+      });
+
+      // Sidebar collapsible sections
+      document.querySelectorAll('.sidebar-section-header').forEach(header => {
+        header.addEventListener('click', async () => {
+          const section = header.dataset.section;
+          const content = header.nextElementSibling;
+          const isCollapsed = content.classList.toggle('collapsed');
+          header.classList.toggle('collapsed', isCollapsed);
+          state.collapsedSections[section] = isCollapsed;
+          await saveSettings();
+        });
+      });
+
+      // Delegated events in messages list (copy buttons + thinking toggles)
+      el.chatMessages.addEventListener('click', (e) => {
+        const copyBtn = e.target.closest('.copy-btn');
+        if (copyBtn) {
+          const code = copyBtn.closest('pre')?.querySelector('code')?.textContent || '';
+          navigator.clipboard.writeText(code);
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => (copyBtn.textContent = 'Copy'), 1600);
+          return;
+        }
+
+        const th = e.target.closest('.thinking-header');
+        if (th) {
+          const content = th.nextElementSibling;
+          if (!content) return;
+          content.classList.toggle('expanded');
+          const icon = th.querySelector('.toggle-icon');
+          if (icon) icon.textContent = content.classList.contains('expanded') ? '▼' : '▶';
+        }
+      });
+
+      // Power: save/reset inspector
+      el.saveInspectorBtn.addEventListener('click', async () => {
+        state.baseUrlOverride = (el.baseUrlOverrideInput.value || '').trim();
+        state.openrouterReferer = (el.openrouterRefererInput.value || '').trim();
+        state.openrouterTitle = (el.openrouterTitleInput.value || '').trim();
+        await saveSettings();
+        toast('<b>Inspector</b> saved.');
+      });
+
+      el.resetInspectorBtn.addEventListener('click', async () => {
+        state.baseUrlOverride = '';
+        state.openrouterReferer = '';
+        state.openrouterTitle = '';
+        syncInspectorFields();
+        await saveSettings();
+        toast('<b>Inspector</b> reset.');
+      });
+
+      // Prompts: discovery
+      el.githubUrlInput.addEventListener('change', async (e) => {
+        state.githubDiscoveryUrl = (e.target.value || '').trim();
+        await saveSettings();
+      });
+
+      el.refreshDiscoveryBtn.addEventListener('click', refreshDiscovery);
+      el.clearDiscoveryCacheBtn.addEventListener('click', clearDiscoveryCache);
+
+      // Security: opt-in sessionStorage
+      el.persistKeyCheckbox.addEventListener('change', () => {
+        const opt = el.persistKeyCheckbox.checked;
+        sessionStorage.setItem(SESSION_KEY_OPTIN, opt ? '1' : '0');
+        if (opt && state.apiKey) sessionStorage.setItem(SESSION_KEY_STORAGE, state.apiKey);
+        if (!opt) sessionStorage.removeItem(SESSION_KEY_STORAGE);
+        updateSecurityStatus();
+        toast(opt ? '<b>Key</b> will persist in sessionStorage.' : '<b>Key</b> is memory-only.');
+      });
+
+      el.securityClearKeyBtn.addEventListener('click', clearApiKey);
+      el.securityLockBtn.addEventListener('click', lockTerminal);
+
+      // Tasks
+      el.addTaskBtn.addEventListener('click', async () => {
+        const title = (el.newTaskTitle.value || '').trim();
+        if (!title) { toast('<b>Task</b> needs a title.', 2200); return; }
+        const sched = el.newTaskSchedule.value;
+        await addTask(title, sched);
+        el.newTaskTitle.value = '';
+        renderPowerLists();
+      });
+
+      // Delegated actions in power lists
+      el.powerModal.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+
+        if (action === 'load-session') await loadSession(id);
+        if (action === 'delete-session') await deleteSession(id);
+        if (action === 'view-artifact') await viewArtifact(id);
+        if (action === 'delete-artifact') await deleteArtifact(id);
+        if (action === 'uninstall-pack') await uninstallPromptPack(id);
+        if (action === 'toggle-task') await toggleTask(id);
+        if (action === 'delete-task') await deleteTask(id);
+
+        renderPowerLists();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (el.promptStackModal.classList.contains('visible')) closePromptStackModal();
+          if (el.powerModal.classList.contains('visible')) el.powerModal.classList.remove('visible');
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          el.messageInput.focus();
+        }
+      });
+    }
+
+    function openPromptStackModal({ focus = 'stack' } = {}) {
+      el.kernelTextarea.value = state.kernelPrompt || '';
+      const o = getOverlayById(state.overlayId);
+      el.overlayTextarea.value = o.body || '';
+      el.previewTextarea.value = composeSystemPrompt();
+
+      // set tab
+      document.querySelectorAll('#promptStackModal .tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#promptStackModal .panel').forEach(p => p.classList.remove('visible'));
+      const btn = document.querySelector(`#promptStackModal .tab-btn[data-tab="${focus}"]`);
+      const panel = document.getElementById(`tab-${focus}`);
+      if (btn) btn.classList.add('active');
+      if (panel) panel.classList.add('visible');
+
+      el.promptStackModal.classList.add('visible');
+      refreshPromptIndicator();
+    }
+
+    function closePromptStackModal() {
+      el.promptStackModal.classList.remove('visible');
+    }
+
+    function syncInspectorFields() {
+      el.baseUrlOverrideInput.value = state.baseUrlOverride || '';
+      el.openrouterRefererInput.value = state.openrouterReferer || '';
+      el.openrouterTitleInput.value = state.openrouterTitle || '';
+    }
+
+    function updateSecurityStatus() {
+      const opt = el.persistKeyCheckbox.checked;
+      el.keyStorageStatus.textContent = opt ? 'sessionStorage (opt-in)' : 'Memory-only (default)';
+    }
+
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
+
+    async function init() {
+      // Configure marked BEFORE rendering
+      marked.setOptions({
+        highlight: function(code, lang) {
+          if (lang && hljs.getLanguage(lang)) return hljs.highlight(code, { language: lang }).value;
+          return hljs.highlightAuto(code).value;
+        },
+        breaks: true,
+        gfm: true
+      });
+
+      // Load settings from IndexedDB
+      await loadSettings();
+
+      // Apply UI settings
+      el.sidebar.classList.toggle('collapsed', state.sidebarCollapsed);
+
+      Object.entries(state.collapsedSections).forEach(([section, collapsed]) => {
+        if (collapsed) {
+          const header = document.querySelector(`[data-section="${section}"]`);
+          if (header) {
+            header.classList.add('collapsed');
+            header.nextElementSibling.classList.add('collapsed');
+          }
+        }
+      });
+
+      // Load prompt packs
+      await loadPromptPacks();
+
+      // Ensure we have a session
+      if (!state.currentSession) {
+        state.currentSession = makeNewSession();
+        await saveCurrentSession();
+      } else {
+        // ensure it exists in DB
+        await db.put('sessions', state.currentSession);
+      }
+
+      // Load indexes
+      await refreshLibraryIndexes();
+
+      // SessionStorage opt-in restore
+      const optin = sessionStorage.getItem(SESSION_KEY_OPTIN) === '1';
+      el.persistKeyCheckbox.checked = optin;
+      updateSecurityStatus();
+
+      if (optin) {
+        const ssKey = sessionStorage.getItem(SESSION_KEY_STORAGE) || '';
+        if (ssKey) state.apiKey = ssKey;
+      }
+
+      // Sync top inputs
+      el.apiKeyInput.value = state.apiKey || '';
+      el.providerSelect.value = state.providerId;
+      el.modelInput.value = state.modelId;
+      el.temperatureInput.value = state.temperature;
+      el.maxTokensInput.value = state.maxTokens;
+      el.thinkingBudgetInput.value = state.thinkingBudget;
+
+      // Inspector fields
+      syncInspectorFields();
+
+      // Discovery fields
+      el.githubUrlInput.value = state.githubDiscoveryUrl || DEFAULT_GITHUB_DISCOVERY_URL;
+      syncDiscoveryStatus();
+
+      // Build overlay select and model suggestions
+      renderOverlaySelect();
+      renderModelDatalist();
+
+      // Commands
+      renderCommands();
+
+      // Provider indicator
+      setProviderIndicator(state.apiKey ? 'disconnected' : 'disconnected');
+
+      // Render
+      refreshPromptIndicator();
+      renderMessages();
+      updateStatusBar();
+
+      // Hook up listeners
+      setupModalTabs();
+      setupEventListeners();
+
+      // Start tasks loop
+      startTaskTimer();
+    }
+
+    init();
   </script>
 </body>
 </html>
