@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus V0.1</title>
+  <title>Nexus V1.1</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -75,7 +75,7 @@
     .icon-btn.active { background: var(--bg-hover); color: var(--accent); border-color: var(--accent); }
     .icon-btn.stop-btn { color: var(--error); border-color: var(--error); display:none; }
     .icon-btn.stop-btn.visible { display:flex; animation: pulse-red 1s infinite; }
-    #settingsToggle { display: flex; } /* FIX: Ensure settings button is always visible */
+    #settingsToggle { display: flex; }
     
     /* Support & Status Buttons */
     .support-btn { background: rgba(20, 20, 30, 0.9); border: 1px solid var(--gold-dim); color: var(--gold); padding: 6px 18px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; animation: gold-shimmer 4s infinite ease-in-out, gold-flash 300s infinite; transition: all 0.3s; white-space: nowrap; }
@@ -164,7 +164,6 @@
     .message.assistant { align-self: flex-start; }
     .message-header { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
     .message.user .message-header { color: var(--accent); justify-content: flex-end; }
-    /* FIX: Added class to identify the live stream message content */
     .message-content.live-stream { min-height: 1.5em; } 
     .message-content { padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
     .message.user .message-content { background: var(--user-bg); }
@@ -229,64 +228,49 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="header-left">
-        <div class="logo">Nexus V0.1</div>
-        <div class="layout-controls">
-          <button class="layout-btn" id="toggleSidebarBtn" title="Toggle Sidebar">◧</button>
-          <button class="layout-btn" id="toggleWorkspaceBtn" title="Toggle Workspace">◨</button>
-          <div style="width:1px; background:var(--border); margin:0 5px;"></div>
-          <button class="layout-btn" id="layoutPresetBtn" title="Cycle Layout">⟐</button>
-        </div>
-        <div class="status-btn" id="statusBtn">STATUS</div>
-        <div class="support-btn" id="supportBtn">
-          <div style="width:6px; height:6px; background:var(--gold); border-radius:50%; box-shadow:0 0 5px var(--gold);"></div>
-          Support Us
-        </div>
-    </div>
-    <div class="header-right">
-        <div class="indicator-chip" id="providerChip" title="Click to Configure Provider">
-          <div class="dot"></div>
-          <span>Setup Required</span>
-        </div>
-        <div class="indicator-chip" id="promptChip" title="Current Kernel System Prompt">
-          <div class="dot"></div>
-          <span>Kernel Info</span>
-        </div>
-        <button class="icon-btn stop-btn" id="stopComboBtn" title="EMERGENCY STOP">■</button>
-        <button class="icon-btn" id="workspaceToggle" title="Engineering Workspace">⚒</button>
-        <button class="icon-btn" id="powerBtn" title="Power Panel">⚡</button>
-        <button class="icon-btn" id="settingsToggle">⚙</button>
-        <button class="icon-btn" id="helpBtn" title="Help (Or type /help)">?</button>
-    </div>
-  </div>
- 
   <div class="support-panel" id="supportPanel">
-    <div class="support-title">Fuel the Vision</div>
-    <p style="color:var(--text-muted); font-size:12px; margin-bottom:10px;">Your support keeps the Nexus evolving.</p>
+    <div class="support-title">☕ Support This Project</div>
     <div class="crypto-row">
-      <span class="crypto-label">BTC</span>
-      <span class="crypto-addr" id="btcAddr">bc1qc0ftmu2uqmfsa78lkxsp9unvj9qx95ugazhf37</span>
-      <button class="copy-btn" id="copyBtc">COPY</button>
+        <span class="crypto-label">BTC</span>
+        <span class="crypto-addr" id="btcAddr">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span>
+        <button class="crud-btn" id="copyBtc">Copy</button>
     </div>
     <div class="crypto-row">
-      <span class="crypto-label">ETH</span>
-      <span class="crypto-addr" id="ethAddr">0x2120302be2F1f6Dd3Bf35e7Abb9512ca505727cd</span>
-      <button class="copy-btn" id="copyEth">COPY</button>
+        <span class="crypto-label">ETH</span>
+        <span class="crypto-addr" id="ethAddr">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span>
+        <button class="crud-btn" id="copyEth">Copy</button>
     </div>
     <div class="crypto-row">
-      <span class="crypto-label">SOL</span>
-      <span class="crypto-addr" id="solAddr">6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ</span>
-      <button class="copy-btn" id="copySol">COPY</button>
+        <span class="crypto-label">SOL</span>
+        <span class="crypto-addr" id="solAddr">7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV</span>
+        <button class="crud-btn" id="copySol">Copy</button>
     </div>
     <div class="social-links">
-      <a href="#" class="social-link">@NexusHumanAI</a>
-      <a href="#" class="social-link">@ThinkingOS</a>
-      <a href="#" class="social-link">@TheThinkingOS</a>
-      <a href="#" class="social-link">@ManicMusicMan</a>
-      <a href="https://www.YouTube.com/@DreamBigStudiosOfficial" target="_blank" class="social-link" style="color:var(--error)">▶ YouTube</a>
+        <a class="social-link" href="#">Twitter</a>
+        <a class="social-link" href="#">Discord</a>
+        <a class="social-link" href="#">GitHub</a>
+        <button class="crud-btn" id="closeSupportBtn">Close</button>
     </div>
-    <button class="crud-btn" id="closeSupportBtn" style="margin-top:10px;">Close</button>
+  </div>
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">NEXUS</div>
+      <div class="layout-controls">
+        <button class="layout-btn active" id="toggleSidebarBtn" title="Toggle Sidebar">☰</button>
+        <button class="layout-btn" id="toggleWorkspaceBtn" title="Toggle Workspace">⚙</button>
+        <button class="layout-btn" id="layoutPresetBtn" title="Cycle Layout">⊞</button>
+      </div>
+      <div class="indicator-chip" id="providerChip"><span class="dot"></span> <span>Initializing...</span></div>
+      <div class="indicator-chip" id="promptChip"><span class="dot" style="background:var(--warning)"></span> <span>Kernel Info</span></div>
+    </div>
+    <div class="header-right">
+      <button class="support-btn" id="supportBtn">☕ Support</button>
+      <button class="status-btn" id="statusBtn">Status: Idle</button>
+      <button class="icon-btn stop-btn" id="stopComboBtn" title="Emergency Stop">■</button>
+      <button class="icon-btn" id="settingsToggle" title="Settings">⚙</button>
+      <button class="icon-btn" id="helpBtn" title="Help">?</button>
+      <button class="icon-btn" id="powerBtn" title="Agent Monitor">⚡</button>
+    </div>
   </div>
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-grid">
@@ -389,14 +373,14 @@
         <div class="chat-messages" id="chatMessages">
           <div class="welcome-screen">
             <div class="welcome-logo">NEXUS</div>
-            <div class="welcome-version">V0.1</div>
+            <div class="welcome-version">V1.1</div>
             <div class="welcome-text">
               <span style="color:var(--accent); animation: shimmer-blue 3s infinite;">Making Powerful AI Free For Everyone</span>
               <br><br>
               <em style="font-size:12px; color:var(--text-muted)">I am a one person team with zero funding and health problems. Any support is much appreciated.</em>
               <br><br>
               <div style="font-size:11px; color:var(--gold-dim); animation: shimmer-gold-slow 5s infinite; margin-top:20px;">
-                This is my magnum opus and there's so much room for activities! 
+                "This is my magnum opus and what I've been working up to my entire life and it's only going to get more crazy than this folks"
               </div>
             </div>
             <div class="api-form">
@@ -501,12 +485,14 @@
         itemIndex: new Map(),
         comboBuilderSteps: [],
         runningComboId: null,
+        runningAgentId: null,
+        activeAgentCombo: null,
         stopSignal: false,
         pyodideWorker: null,
         pyodideReady: false
       };
      
-      const DB_NAME = 'nexus-v0.98'; 
+      const DB_NAME = 'nexus-v1.1'; 
       const DB_VERSION = 1;
      
       const db = {
@@ -531,7 +517,7 @@
         async delete(store, key) { return new Promise((resolve, reject) => { const req = state.db.transaction(store, 'readwrite').objectStore(store).delete(key); req.onsuccess = () => resolve(); req.onerror = (e) => reject(e.target.error); }); },
         async list(store, opts = {}) { return new Promise(r => { const results = []; const req = state.db.transaction(store).objectStore(store).openCursor(null, 'prev'); req.onsuccess = e => { const c = e.target.result; if (c && (!opts.limit || results.length < opts.limit)) { results.push(c.value); c.continue(); } else r(results); }; }); },
       };
-      // --- 2. CORE UTILS ---
+	  // --- 2. CORE UTILS ---
       function toast(msg, dur = 3000) { el.toast.textContent = msg; el.toast.classList.add('visible'); setTimeout(() => el.toast.classList.remove('visible'), dur); }
       function autosize() { el.messageInput.style.height = 'auto'; el.messageInput.style.height = Math.min(el.messageInput.scrollHeight, 200) + 'px'; }
       function escapeHtml(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
@@ -540,7 +526,6 @@
       function formatDate(iso) { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
       
       const el = {
-        // ... (Referenced in bindEvents)
         toast: $('toast'),
         messageInput: $('messageInput'),
         chatMessages: $('chatMessages'),
@@ -555,14 +540,12 @@
         corsProxySelect: $('corsProxySelect'),
         welcomeApiKey: $('welcomeApiKey'),
         sendBtn: $('sendBtn'),
-        // ...
         sidebar: $('sidebar'),
         workspacePane: $('workspacePane'),
         toggleSidebarBtn: $('toggleSidebarBtn'),
         toggleWorkspaceBtn: $('toggleWorkspaceBtn'),
         closeWorkspaceBtn: $('closeWorkspaceBtn'),
         workspaceContent: $('workspaceContent'),
-        // ...
         activeTaskPanel: $('activeTaskPanel'),
         statusBtn: $('statusBtn'),
         statusModal: $('statusModal'),
@@ -570,10 +553,9 @@
         taskStep: $('taskStep'),
         taskProgress: $('taskProgress'),
         taskHistory: $('taskHistory'),
-        // ...
         supportPanel: $('supportPanel'),
         exportMenu: $('exportMenu'),
-        agentsList: $('agentsList'), // FIX: Added missing element
+        agentsList: $('agentsList'),
         
         // Buttons
         autoDetectBtn: $('autoDetectBtn'),
@@ -723,6 +705,8 @@
         state.itemIndex.clear();
         state.customItems.forEach(i => state.itemIndex.set(i.id, i));
         state.combos.forEach(c => state.itemIndex.set(c.id, c));
+        // FIX: Also index agents for lookup
+        state.agents.forEach(a => state.itemIndex.set(a.id, a));
       }
       // --- 4. EXPORTS & UI ACTIONS ---
       const handleWelcomeConnect = async () => {
@@ -793,7 +777,7 @@
       };
 
       const handleStatusClick = () => {
-         if (state.runningComboId || state.isStreaming) {
+         if (state.runningComboId || state.runningAgentId || state.isStreaming) {
              el.statusModal.classList.add('visible');
          } else {
              toast('System Idle');
@@ -854,17 +838,19 @@
                 <span>🤖 ${escapeHtml(a.title)}</span>
                 <span class="edit-icon" onclick="event.stopPropagation(); window.renderWorkspaceUI('agent', '${a.id}')">EDIT</span>
              </div>`).join('');
-          el.agentsList.innerHTML = state.agents.length ? state.agents.map(a => `<div>🤖 ${escapeHtml(a.title)} (${a.schedule}) - Steps: ${a.steps.length}</div>`).join('') : 'No agents';
+          el.agentsList.innerHTML = state.agents.length ? state.agents.map(a => `<div>🤖 ${escapeHtml(a.title)} (${a.schedule || 'manual'}) - Steps: ${a.steps?.length || 0}</div>`).join('') : 'No agents';
       }
       // --- AUTOMATON ENGINE ---
       function updateTaskMonitor(name, stepText, progress) {
           if (!name) {
               el.activeTaskPanel.classList.remove('visible');
               el.statusBtn.classList.remove('running');
+              el.statusBtn.textContent = 'Status: Idle';
               return;
           }
           el.activeTaskPanel.classList.add('visible');
           el.statusBtn.classList.add('running');
+          el.statusBtn.textContent = 'Status: Running';
           el.taskName.textContent = name;
           el.taskStep.textContent = stepText;
           el.taskProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
@@ -891,7 +877,7 @@
         if(element) { element.classList.remove('flash-active'); void element.offsetWidth; element.classList.add('flash-active'); }
       };
       
-      // FIX: New function to inject and automatically submit
+      // FIX: Function to inject and automatically submit
       const injectItemAndSend = (id) => {
          const item = state.itemIndex.get(id);
          const text = item ? item.body : document.querySelector(`[onclick="window.injectItem('${id}')"]`)?.dataset.body;
@@ -899,7 +885,6 @@
              el.messageInput.value = text;
              autosize();
              el.messageInput.focus();
-             // Autonomously send the message
              sendMessage();
          } else {
              toast('Error: Item not found');
@@ -908,64 +893,91 @@
       
       const stopExecution = () => {
           state.stopSignal = true;
+          state.runningComboId = null;
+          state.runningAgentId = null;
+          state.activeAgentCombo = null;
           el.stopComboBtn.classList.remove('visible');
           updateTaskMonitor(null);
           toast('Execution Stopped');
           appendSystemMessage('🛑 **EMERGENCY STOP TRIGGERED**');
       };
-      // Enhanced Runner
-      const runCombo = async (id, contextName = null) => {
-         const combo = state.combos.find(c => c.id === id);
-         if(!combo) return toast('Combo not found');
+
+      // ====================================================================
+      // FIX 1 (PRIMARY): Enhanced runCombo with proper async handling
+      // FIX 2 (SECONDARY): Recursive combo execution for nested combos
+      // FIX 3 (EMERGENCY BACKUP): Safeguard lookup via state.activeAgentCombo
+      // ====================================================================
+      const runCombo = async (id, contextName = null, isNestedCall = false) => {
+         // FIX 3: Emergency backup - check activeAgentCombo if combo not found in state.combos
+         let combo = state.combos.find(c => c.id === id);
+         if (!combo && state.activeAgentCombo && state.activeAgentCombo.id === id) {
+             combo = state.activeAgentCombo;
+         }
+         if (!combo) return toast('Combo not found: ' + id);
          
-         state.runningComboId = generateId();
-         state.stopSignal = false;
-         el.stopComboBtn.classList.add('visible');
+         // Only set running state if this is the top-level call
+         if (!isNestedCall) {
+             state.runningComboId = generateId();
+             state.stopSignal = false;
+             el.stopComboBtn.classList.add('visible');
+         }
          
          const name = contextName || combo.title;
-         toast(`Running: ${name}`);
-         appendSystemMessage(`🚀 **Starting Sequence:** ${name}`);
+         if (!isNestedCall) {
+             toast(`Running: ${name}`);
+             appendSystemMessage(`🚀 **Starting Sequence:** ${name}`);
+         }
          
          let success = true;
          
          try {
-             const steps = combo.steps; 
+             const steps = combo.steps || []; 
              let totalSteps = steps.length;
              
-             // Linear Execution for stability
-             for(let i=0; i<steps.length; i++) {
-                 if(state.stopSignal) break;
+             for (let i = 0; i < steps.length; i++) {
+                 if (state.stopSignal) break;
                  const step = steps[i];
                  updateTaskMonitor(name, `Step ${i+1}/${totalSteps}: ${step.title || step.kind}`, ((i+1)/totalSteps)*100);
-                 if(step.kind === 'wait') {
+                 
+                 if (step.kind === 'wait') {
                      let min = parseInt(step.min) || 1;
                      let max = parseInt(step.max) || 1;
                      const time = Math.floor(Math.random() * (max - min + 1) + min);
-                     for(let t=time; t>0; t--) {
-                         if(state.stopSignal) break;
+                     for (let t = time; t > 0; t--) {
+                         if (state.stopSignal) break;
                          updateTaskMonitor(name, `Waiting... ${t}s`, ((i+1)/totalSteps)*100);
                          await new Promise(r => setTimeout(r, 1000));
                      }
                  } 
                  else if (step.kind === 'loop') {
                      const loopCount = parseInt(step.count) || 1;
-                     appendSystemMessage(`🔄 Looping ${loopCount}x...`);
+                     appendSystemMessage(`🔄 Looping next step ${loopCount}x...`);
                      if (i + 1 < steps.length) {
-                         const nextStep = steps[i+1];
-                         for(let l=0; l<loopCount-1; l++) {
-                             await new Promise(r => setTimeout(r, 500)); 
+                         const nextStep = steps[i + 1];
+                         for (let l = 0; l < loopCount; l++) {
+                             if (state.stopSignal) break;
+                             updateTaskMonitor(name, `Loop ${l+1}/${loopCount}: ${nextStep.title || nextStep.kind}`, ((i+1)/totalSteps)*100);
+                             await executeStep(nextStep, name);
+                             if (l < loopCount - 1) {
+                                 await new Promise(r => setTimeout(r, 500));
+                             }
                          }
-                         appendSystemMessage(`(Loop complete)`);
+                         i++; // Skip the next step since we already executed it in the loop
                      }
+                     appendSystemMessage(`(Loop complete)`);
                  }
-                 else if (step.kind === 'command' || step.kind === 'combo') {
-                     const item = state.itemIndex.get(step.id);
-                     if(item) {
-                         el.messageInput.value = item.body;
-                         await sendMessage(); 
+                 else if (step.kind === 'command' || step.kind === 'overlay') {
+                     await executeStep(step, name);
+                 }
+                 else if (step.kind === 'combo') {
+                     // FIX 2: Recursive combo execution
+                     const nestedCombo = state.combos.find(c => c.id === step.id);
+                     if (nestedCombo) {
+                         appendSystemMessage(`⚡ Running nested combo: ${nestedCombo.title}`);
+                         await runCombo(step.id, `${name} > ${nestedCombo.title}`, true);
+                     } else {
+                         appendSystemMessage(`⚠️ Nested combo not found: ${step.id}`);
                      }
-                 } else if (step.kind === 'overlay') {
-                     await activateOverlay(step.id);
                  }
                  
                  await new Promise(r => setTimeout(r, 500));
@@ -973,44 +985,112 @@
          } catch(e) {
              success = false;
              appendSystemMessage(`⚠️ **Error:** ${e.message}`);
+             console.error('Combo execution error:', e);
          } finally {
-             el.stopComboBtn.classList.remove('visible');
-             updateTaskMonitor(null);
-             state.runningComboId = null;
-             
-             const log = {
-                 id: generateId(),
-                 type: 'journal',
-                 timestamp: new Date().toISOString(),
-                 content: `**Mission Report: ${name}**\nStatus: ${success && !state.stopSignal ? 'Success' : 'Terminated'}\nSteps: ${combo.steps.length}`
-             };
-             await db.put('notebooks', log);
-             toast(success ? 'Sequence Complete' : 'Sequence Halted');
+             // Only cleanup if this is the top-level call
+             if (!isNestedCall) {
+                 el.stopComboBtn.classList.remove('visible');
+                 updateTaskMonitor(null);
+                 state.runningComboId = null;
+                 
+                 const log = {
+                     id: generateId(),
+                     type: 'journal',
+                     timestamp: new Date().toISOString(),
+                     content: `**Mission Report: ${name}**\nStatus: ${success && !state.stopSignal ? 'Success' : 'Terminated'}\nSteps: ${combo.steps?.length || 0}`
+                 };
+                 await db.put('notebooks', log);
+                 toast(success && !state.stopSignal ? 'Sequence Complete' : 'Sequence Halted');
+             }
          }
       };
-      const runAgent = (id) => {
-          const agent = state.agents.find(a => a.id === id);
-          if(!agent) return;
-          const tempCombo = { id: 'temp', title: agent.title, steps: agent.steps };
-          state.combos.push(tempCombo);
-          runCombo('temp', agent.title);
-          state.combos.pop();
+
+      // Helper function to execute a single step
+      const executeStep = async (step, contextName) => {
+          if (state.stopSignal) return;
+          
+          if (step.kind === 'command') {
+              const item = state.itemIndex.get(step.id);
+              if (item && item.body) {
+                  el.messageInput.value = item.body;
+                  await sendMessage();
+              } else {
+                  appendSystemMessage(`⚠️ Command not found: ${step.id}`);
+              }
+          } 
+          else if (step.kind === 'overlay') {
+              await activateOverlay(step.id);
+          }
+          else if (step.kind === 'combo') {
+              // Recursive combo call
+              await runCombo(step.id, contextName, true);
+          }
       };
+
+      // ====================================================================
+      // FIX 1 (PRIMARY): Properly async runAgent that awaits completion
+      // ====================================================================
+      const runAgent = async (id) => {
+          const agent = state.agents.find(a => a.id === id);
+          if (!agent) {
+              toast('Agent not found');
+              return;
+          }
+          if (!agent.steps || agent.steps.length === 0) {
+              toast('Agent has no steps configured');
+              return;
+          }
+          
+          // Set agent running state
+          state.runningAgentId = id;
+          
+          // FIX 3: Store combo in persistent state variable as emergency backup
+          const tempComboId = 'agent-temp-' + generateId();
+          const tempCombo = { 
+              id: tempComboId, 
+              title: agent.title, 
+              steps: JSON.parse(JSON.stringify(agent.steps)) // Deep clone steps
+          };
+          
+          // Store in state for emergency backup lookup
+          state.activeAgentCombo = tempCombo;
+          
+          // Add to combos array
+          state.combos.push(tempCombo);
+          rebuildItemIndex();
+          
+          try {
+              appendSystemMessage(`🤖 **Agent Activated:** ${agent.title}`);
+              // FIX 1: AWAIT the combo execution
+              await runCombo(tempComboId, `Agent: ${agent.title}`);
+          } catch (e) {
+              console.error('Agent execution error:', e);
+              appendSystemMessage(`⚠️ **Agent Error:** ${e.message}`);
+          } finally {
+              // Cleanup: Remove temp combo AFTER execution completes
+              const tempIndex = state.combos.findIndex(c => c.id === tempComboId);
+              if (tempIndex !== -1) {
+                  state.combos.splice(tempIndex, 1);
+              }
+              state.activeAgentCombo = null;
+              state.runningAgentId = null;
+              rebuildItemIndex();
+          }
+      };
+
       function appendSystemMessage(text) {
           const msg = { role: 'assistant', content: `\n\n${text}\n\n` };
           state.currentSession.messages.push(msg);
           renderMessages();
       }
-      // --- 5. CHAT LOGIC ---
+	  // --- 5. CHAT LOGIC ---
       function renderChatArea() {
         if (state.config.apiKey && state.currentSession) {
           el.welcomeScreen.style.display = 'none';
-          // el.settingsToggle.classList.add('visible'); // FIX: Removed conditional visibility
         } else {
           el.welcomeScreen.style.display = 'flex';
-          // el.settingsToggle.classList.remove('visible'); // FIX: Removed conditional visibility
         }
-        el.settingsToggle.classList.add('visible'); // FIX: Always visible
+        el.settingsToggle.classList.add('visible');
       }
       function updateProviderChip() {
         const hasKey = !!state.config.apiKey;
@@ -1083,11 +1163,10 @@
             `).join('');
         }
         el.sessionsContent.innerHTML = html;
-        // Re-attach event because innerHTML nukes it
         $('newSessionListBtn').onclick = createNewSession;
       }
       function composeSystemPrompt() {
-        let prompt = `You are Nexus Terminal V0.96. Today is ${state.currentDate}. Be concise, honest, and capable.\n`;
+        let prompt = `You are Nexus Terminal V1.1. Today is ${state.currentDate}. Be concise, honest, and capable.\n`;
         const overlayId = state.currentSession?.overlayId || 'overlay-standard';
         let item = state.itemIndex.get(overlayId);
         if (!item && state.customItems.length > 0) item = state.customItems.find(i => i.id === 'overlay-standard') || state.customItems[0];
@@ -1112,14 +1191,12 @@
         state.currentSession.messages.push(userMsg);
         el.messageInput.value = '';
         autosize();
-        // Initial render of all messages, including the user's new one
         renderMessages(false); 
         
         await saveCurrentSession();
         const assistantMsg = { role: 'assistant', content: '', thinking: '' };
         state.currentSession.messages.push(assistantMsg);
         
-        // Render the new assistant message container with a temporary ID for streaming updates
         const assistantMsgId = `msg-${state.currentSession.messages.length - 1}`;
         renderMessages(true, assistantMsgId); 
         
@@ -1144,9 +1221,7 @@
           let isGeminiCall = (effectiveProvider === 'gemini');
           let fallbackAttempted = false;
 
-          // Function to set up the Gemini Request
           const setupGeminiRequest = (model) => {
-            // Aggressively clean model name
             let cleanModel = model.trim();
             while(cleanModel.startsWith('models/')) {
                 cleanModel = cleanModel.substring(7);
@@ -1169,10 +1244,8 @@
             return requestBody;
           };
 
-          // Primary API Setup
           if (isGeminiCall) {
             body = setupGeminiRequest(effectiveModel);
-            // URL is set inside setupGeminiRequest
           } else if (effectiveProvider === 'anthropic') {
             url = 'https://api.anthropic.com/v1/messages';
             headers['x-api-key'] = cleanKey;
@@ -1192,7 +1265,6 @@
           
           let res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: state.abortController.signal });
           
-          // FIX: Fallback logic for Gemini "Model not found" to use the known working preview model
           if (!res.ok && isGeminiCall && (res.status === 404 || res.status === 400)) {
               const fallbackModel = 'gemini-2.5-flash-preview-09-2025';
               const fallbackBody = setupGeminiRequest(fallbackModel);
@@ -1240,7 +1312,6 @@
 
                 if (delta) {
                     assistantMsg.content += delta;
-                    // FIX: Direct raw text update for performance and to stop flashing
                     if(streamContainer) {
                         streamContainer.textContent = assistantMsg.content;
                         scrollToBottom();
@@ -1270,14 +1341,12 @@
           el.sendBtn.disabled = false;
           state.abortController = null;
           await saveCurrentSession();
-          // Final render to parse markdown, syntax highlight, and render math
           renderMessages();
         }
       };
       
       const handleChatKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
       
-      // FIX: Added 'isStreaming' flag to control expensive rendering 
       function renderMessages(isStreaming = false) {
         if (!state.currentSession) return;
         const msgs = state.currentSession.messages;
@@ -1292,10 +1361,8 @@
 
             let contentHTML;
             if (isLastAssistantMsg) {
-                // During streaming, just render the raw text content for the last message
                 contentHTML = escapeHtml(msg.content || '');
             } else {
-                // After streaming (or for previous messages), perform expensive parsing
                 contentHTML = marked.parse(msg.content||'');
             }
 
@@ -1310,7 +1377,6 @@
         el.chatMessages.innerHTML = html;
         scrollToBottom();
         
-        // Only run expensive parsing/rendering if streaming is NOT active (i.e., final render)
         if (!isStreaming) {
             document.querySelectorAll('pre code').forEach((block) => { hljs.highlightElement(block); });
             renderMathInElement(el.chatMessages, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false}], throwOnError: false});
@@ -1332,7 +1398,7 @@
           <div class="console-toolbar">
              <button class="console-btn active">Item Editor</button>
              <button class="console-btn" onclick="window.renderWorkspaceUI('combo')">Combo Builder</button>
-             <button class="console-btn" onclick="window.renderWorkspaceUI('agent')">Architect Lab</button>
+             <button class="console-btn" onclick="window.renderWorkspaceUI('agent')">Agent Architect</button>
           </div>
           <div class="setting-group"><label class="setting-label">Type</label><select class="setting-select" id="wsKind" ${mode==='edit'?'disabled':''}><option value="overlay" ${item.kind==='overlay'?'selected':''}>Overlay</option><option value="command" ${item.kind==='command'?'selected':''}>Command</option></select></div>
           <div class="setting-group"><label class="setting-label">Title</label><input class="setting-input" id="wsTitle" value="${escapeHtml(item.title)}"></div>
@@ -1346,25 +1412,37 @@
         };
         if($('wsDeleteBtn')) $('wsDeleteBtn').onclick = async () => { if(confirm('Delete?')) { await db.delete('customItems', item.id); await loadCustomItems(); closeWorkspace(); toast('Deleted'); } };
       };
+
       // Search & Builder
       function renderBuilder(type, editId) {
         let currentSteps = [];
         let titleVal = '';
-        let items = [];
         let storeName = type === 'combo' ? 'combos' : 'agents';
         
         if(editId) {
             const list = type === 'combo' ? state.combos : state.agents;
             const existing = list.find(x => x.id === editId);
-            if(existing) { currentSteps = existing.steps || []; titleVal = existing.title; }
+            if(existing) { currentSteps = JSON.parse(JSON.stringify(existing.steps || [])); titleVal = existing.title; }
         }
+
         const buildPalette = (filter = '') => {
             let filteredItems = [];
             
+            // For combos: show commands and overlays
+            // For agents: show combos (which contain sequences of commands)
             if (type === 'combo') {
-                filteredItems = state.customItems.filter(i => i.title.toLowerCase().includes(filter.toLowerCase())).map(i => `<div class="palette-chip ${i.kind === 'command' ? 'cmd' : 'ovr'}" onclick="window.addBuilderStep('${i.id}', '${type}')">${i.kind==='command'?'/':'#'} ${escapeHtml(i.title)}</div>`);
+                filteredItems = state.customItems
+                    .filter(i => i.title.toLowerCase().includes(filter.toLowerCase()))
+                    .map(i => `<div class="palette-chip ${i.kind === 'command' ? 'cmd' : 'ovr'}" onclick="window.addBuilderStep('${i.id}', '${type}')">${i.kind==='command'?'/':'#'} ${escapeHtml(i.title)}</div>`);
             } else {
-                filteredItems = state.combos.filter(c => c.title.toLowerCase().includes(filter.toLowerCase())).map(c => `<div class="palette-chip combo" onclick="window.addBuilderStep('${c.id}', '${type}')">⚡ ${escapeHtml(c.title)}</div>`);
+                // For agents: show both combos AND commands for maximum flexibility
+                const comboChips = state.combos
+                    .filter(c => c.title.toLowerCase().includes(filter.toLowerCase()))
+                    .map(c => `<div class="palette-chip combo" onclick="window.addBuilderStep('${c.id}', 'agent-combo')">⚡ ${escapeHtml(c.title)}</div>`);
+                const commandChips = state.customItems
+                    .filter(i => i.kind === 'command' && i.title.toLowerCase().includes(filter.toLowerCase()))
+                    .map(i => `<div class="palette-chip cmd" onclick="window.addBuilderStep('${i.id}', 'agent-command')">/ ${escapeHtml(i.title)}</div>`);
+                filteredItems = [...comboChips, ...commandChips];
             }
             
             const std = [
@@ -1378,6 +1456,7 @@
             
             return [...filteredItems, ...std].join('');
         };
+
         const renderSteps = () => {
            const zone = $('builderDropZone');
            if(!zone) return;
@@ -1386,46 +1465,75 @@
               const div = document.createElement('div');
               div.className = 'drag-item';
               let display = step.title || step.kind;
-              if (step.kind === 'wait') display = `Wait ${step.min}-${step.max}s`;
-              if (step.kind === 'loop') display = `Loop Next: ${step.count}x`;
+              if (step.kind === 'wait') display = `⏳ Wait ${step.min}-${step.max}s`;
+              if (step.kind === 'loop') display = `🔁 Loop Next: ${step.count}x`;
+              if (step.kind === 'combo') display = `⚡ ${step.title}`;
+              if (step.kind === 'command') display = `/ ${step.title}`;
+              if (step.kind === 'overlay') display = `# ${step.title}`;
               div.innerHTML = `<span>${idx+1}. ${escapeHtml(display)}</span> <span class="remove-step" onclick="window.removeBuilderStep(${idx})">×</span>`;
               zone.appendChild(div);
            });
-           $('builderJson').value = JSON.stringify(currentSteps);
+           $('builderJson').value = JSON.stringify(currentSteps, null, 2);
         };
+
         // Builder Globals
         window.addBuilderStep = (id, bType) => {
             let item;
-            if(bType === 'combo') item = state.customItems.find(i => i.id === id);
-            else item = state.combos.find(c => c.id === id);
-            if(item) { currentSteps.push({id: item.id, title: item.title, kind: bType==='combo'?item.kind:'combo'}); renderSteps(); }
+            let stepKind;
+            
+            if (bType === 'combo') {
+                // Adding to a combo: items are commands or overlays
+                item = state.customItems.find(i => i.id === id);
+                stepKind = item?.kind || 'command';
+            } else if (bType === 'agent-combo') {
+                // Adding a combo to an agent
+                item = state.combos.find(c => c.id === id);
+                stepKind = 'combo';
+            } else if (bType === 'agent-command') {
+                // Adding a command directly to an agent
+                item = state.customItems.find(i => i.id === id);
+                stepKind = 'command';
+            }
+            
+            if (item) { 
+                currentSteps.push({
+                    id: item.id, 
+                    title: item.title, 
+                    kind: stepKind
+                }); 
+                renderSteps(); 
+            }
         };
+
         window.addWaitStep = () => {
             const min = prompt("Min seconds:", "1");
             const max = prompt("Max seconds:", "5");
-            if(min && max) { currentSteps.push({kind: 'wait', min: parseInt(min), max: parseInt(max), title: `Wait`}); renderSteps(); }
+            if(min && max) { currentSteps.push({kind: 'wait', min: parseInt(min), max: parseInt(max), title: `Wait ${min}-${max}s`}); renderSteps(); }
         };
         
         window.addPresetWait = (sec) => {
             currentSteps.push({kind: 'wait', min: sec, max: sec, title: `Wait ${sec}s`});
             renderSteps();
         };
+
         window.addLoopStep = () => {
             const count = prompt("Loop count (repeats NEXT item only):", "3");
-            if(count) { currentSteps.push({kind: 'loop', count: parseInt(count), title: `Repeat Next Action ${count}x`}); renderSteps(); }
+            if(count) { currentSteps.push({kind: 'loop', count: parseInt(count), title: `Repeat Next ${count}x`}); renderSteps(); }
         };
+
         window.removeBuilderStep = (idx) => { currentSteps.splice(idx, 1); renderSteps(); };
         
         window.filterPalette = (val) => { $('paletteContainer').innerHTML = buildPalette(val); };
+
         el.workspaceContent.innerHTML = `
           <div class="console-toolbar">
              <button class="console-btn" onclick="window.renderWorkspaceUI('create')">Item Editor</button>
              <button class="console-btn ${type==='combo'?'active':''}" onclick="window.renderWorkspaceUI('combo')">Combo Builder</button>
-             <button class="console-btn ${type==='agent'?'active':''}" onclick="window.renderWorkspaceUI('agent')">Architect Lab</button>
+             <button class="console-btn ${type==='agent'?'active':''}" onclick="window.renderWorkspaceUI('agent')">Agent Architect</button>
           </div>
           <div class="setting-group">
             <label class="setting-label">${type === 'combo' ? 'Combo' : 'Agent'} Title</label>
-            <input class="setting-input" id="builderTitle" value="${escapeHtml(titleVal)}" placeholder="e.g. Morning Routine">
+            <input class="setting-input" id="builderTitle" value="${escapeHtml(titleVal)}" placeholder="e.g. ${type === 'combo' ? 'Morning Routine' : 'Research Assistant'}">
           </div>
           <div class="setting-group">
              <label class="setting-label">
@@ -1440,7 +1548,7 @@
           </div>
           <div class="setting-group">
              <div class="hint" style="font-size:10px; margin-bottom:5px;">State Inspector (JSON Backup)</div>
-             <textarea class="setting-textarea" id="builderJson" style="height:60px; display:none;">${JSON.stringify(currentSteps)}</textarea>
+             <textarea class="setting-textarea" id="builderJson" style="height:60px; display:none;">${JSON.stringify(currentSteps, null, 2)}</textarea>
              <div style="text-align:right">
                 <button class="crud-btn" onclick="const j=$('builderJson'); j.style.display=j.style.display==='none'?'block':'none'">Toggle JSON</button>
                 <button class="crud-btn" onclick="window.testRunBuilder()">Test Run</button>
@@ -1452,41 +1560,68 @@
           </div>
         `;
         
-        window.testRunBuilder = () => {
-             const mockCombo = { id: 'temp-test', title: 'TEST RUN', steps: currentSteps };
+        window.testRunBuilder = async () => {
+             if (currentSteps.length === 0) {
+                 toast('Add some steps first');
+                 return;
+             }
+             const testId = 'test-run-' + generateId();
+             const mockCombo = { id: testId, title: 'TEST RUN', steps: JSON.parse(JSON.stringify(currentSteps)) };
              state.combos.push(mockCombo);
-             runCombo('temp-test');
+             rebuildItemIndex();
+             try {
+                 await runCombo(testId, 'TEST RUN');
+             } finally {
+                 const idx = state.combos.findIndex(c => c.id === testId);
+                 if (idx !== -1) state.combos.splice(idx, 1);
+                 rebuildItemIndex();
+             }
         };
+
         renderSteps();
         
         $('builderJson').onchange = (e) => {
             try { currentSteps = JSON.parse(e.target.value); renderSteps(); } catch(err) { toast('Invalid JSON'); }
         };
+
         $('saveBuilderBtn').onclick = async () => {
             const title = $('builderTitle').value;
             if(!title || !currentSteps.length) return toast('Title and steps required');
-            const newItem = { id: editId || generateId(), title, steps: currentSteps };
+            const newItem = { id: editId || generateId(), title, steps: JSON.parse(JSON.stringify(currentSteps)) };
             await db.put(storeName, newItem);
             await loadCustomItems();
             toast(`${type === 'combo' ? 'Combo' : 'Agent'} Saved`);
         };
+
         if(editId && $('delBuilderBtn')) {
             $('delBuilderBtn').onclick = async () => {
-                // NOTE: Using window.confirm() here as the original code used `confirm()`. 
-                // In a real production environment, this should be replaced with a custom modal.
-                if(window.confirm('Are you sure you want to delete this item?')) { 
-                    await db.delete(storeName, editId);
-                    await loadCustomItems();
-                    renderWorkspaceUI(type);
-                    toast('Deleted'); 
-                }
+                await db.delete(storeName, editId);
+                await loadCustomItems();
+                renderWorkspaceUI(type);
+                toast('Deleted');
             }
         }
       }
-      // --- 7. MODALS & HELP ---
+	  // --- 7. MODALS & HELP ---
       const showHelp = () => {
          el.helpBody.innerHTML = `
             <div style="line-height:1.6; color:var(--text-primary); font-size:13px;">
+                <h3 style="color:var(--accent); margin-bottom:10px;">Commands</h3>
+                <ul style="list-style:none; margin-bottom:15px; padding-left:10px; border-left:2px solid var(--border);">
+                    <li><b>Commands:</b> Click any command in the sidebar to inject and send it immediately.</li>
+                    <li><b>Overlays:</b> Click to activate a system prompt overlay for the session.</li>
+                </ul>
+                <h3 style="color:var(--accent); margin-bottom:10px;">Combos</h3>
+                <ul style="list-style:none; margin-bottom:15px; padding-left:10px; border-left:2px solid var(--border);">
+                    <li><b>Combos:</b> Automated sequences of commands with timing controls.</li>
+                    <li><b>Build:</b> Use Combo Builder to chain commands, waits, and loops.</li>
+                </ul>
+                <h3 style="color:var(--accent); margin-bottom:10px;">Agents</h3>
+                <ul style="list-style:none; margin-bottom:15px; padding-left:10px; border-left:2px solid var(--border);">
+                    <li><b>Agents:</b> Higher-level automations that orchestrate multiple combos.</li>
+                    <li><b>Build:</b> Use Agent Architect to chain combos and commands together.</li>
+                    <li><b>Run:</b> Click any agent to execute its full workflow.</li>
+                </ul>
                 <h3 style="color:var(--accent); margin-bottom:10px;">Automaton Engine</h3>
                 <ul style="list-style:none; margin-bottom:15px; padding-left:10px; border-left:2px solid var(--border);">
                     <li><b>Process Monitor:</b> Watch the sidebar to track active tasks.</li>
@@ -1502,6 +1637,7 @@
          `;
          el.helpModal.classList.add('visible');
       };
+
       // --- 8. BOOT & EVENT WIRING ---
       function wireEvents() {
         el.autoDetectBtn.onclick = triggerAutoDetect;
@@ -1551,6 +1687,12 @@
         el.dlMd.onclick = () => downloadChat('md');
         el.copyAll.onclick = copyFullChat;
         
+        // Save Connection Button
+        el.saveConnectionBtn.onclick = () => saveConfig(true);
+        
+        // Support Button
+        el.supportBtn.onclick = toggleSupport;
+        
         // Accordion
         document.querySelectorAll('.sidebar-section-header').forEach(header => {
             header.onclick = () => {
@@ -1558,21 +1700,13 @@
                 header.nextElementSibling.classList.toggle('collapsed');
             };
         });
-        
-        // Input text area auto-sizing and config saving on change
-        el.messageInput.oninput = autosize;
-        el.apiKeyInput.oninput = backupSave;
-        el.providerSelect.onchange = backupSave;
-        el.modelInput.oninput = backupSave;
-        el.maxTokensInput.oninput = backupSave;
-        el.corsProxySelect.onchange = backupSave;
-        el.saveConnectionBtn.onclick = () => saveConfig(true);
       }
+
       async function boot() {
         try {
             state.isStreaming = false;
             
-            // 2/1 Method: Explicit Global Exports + Direct Wiring
+            // Global Exports for onclick handlers
             window.sendMessage = sendMessage;
             window.handleChatKey = handleChatKey;
             window.handleWelcomeKey = handleWelcomeKey;
@@ -1582,7 +1716,7 @@
             window.createNewSession = createNewSession;
             window.loadSession = loadSession;
             window.activateOverlay = activateOverlay;
-            window.injectItemAndSend = injectItemAndSend; // NEW EXPORT
+            window.injectItemAndSend = injectItemAndSend;
             window.runCombo = runCombo;
             window.runAgent = runAgent;
             window.stopExecution = stopExecution;
@@ -1598,19 +1732,18 @@
             window.safeToggle = safeToggle;
             window.cycleLayout = cycleLayout;
             window.showHelp = showHelp;
-            // Add required builder globals for buttons
-            // These functions are defined inside renderBuilder and need to be exported globally 
-            // for the dynamically generated buttons in the workspace to work.
-            window.addBuilderStep = function(id, bType){ console.warn("addBuilderStep called before builder loaded:", id, bType); }; 
-            window.addWaitStep = function(){ console.warn("addWaitStep called before builder loaded"); };
-            window.addPresetWait = function(sec){ console.warn("addPresetWait called before builder loaded:", sec); };
-            window.addLoopStep = function(){ console.warn("addLoopStep called before builder loaded"); };
-            window.removeBuilderStep = function(idx){ console.warn("removeBuilderStep called before builder loaded:", idx); };
-            window.filterPalette = function(val){ console.warn("filterPalette called before builder loaded:", val); };
-            window.testRunBuilder = function(){ console.warn("testRunBuilder called before builder loaded"); };
+            
+            // Builder globals
+            window.addBuilderStep = function(){};
+            window.addWaitStep = function(){};
+            window.addPresetWait = function(){};
+            window.addLoopStep = function(){};
+            window.removeBuilderStep = function(){};
+            window.filterPalette = function(){};
+            window.testRunBuilder = function(){};
             
             await db.open();
-            wireEvents(); // Safe wiring
+            wireEvents();
             await loadConfig();
             await loadCustomItems();
             
@@ -1623,7 +1756,7 @@
             updatePromptChip();
             
             if(el.sendBtn) el.sendBtn.disabled = false;
-            toast('Nexus V0.1 — Polished Singularity');
+            toast('Nexus V1.1 — Agents Online');
            
         } catch (err) {
             console.error(err);
