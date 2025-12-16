@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEXUS TERMINAL v0.50 (Notebook Edition)</title>
-  
+  <title>Nexus V0.1</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css" crossorigin="anonymous">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
-
+  <!-- KaTeX for live math -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <style>
-    /* --- CSS RESET & VARIABLES (Strict Fidelity v0.41) --- */
+    /* --- CSS RESET & VARIABLES --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --bg-primary: #0a0a0f;
@@ -30,6 +30,8 @@
       --success: #00ff88;
       --warning: #ffaa00;
       --error: #ff4466;
+      --gold: #ffd700;
+      --gold-dim: #ccac00;
       --border: #2a2a3a;
       --user-bg: #1a2a35;
       --assistant-bg: #151520;
@@ -43,636 +45,1594 @@
       flex-direction: column;
       overflow: hidden;
     }
+    
+    /* Animations */
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); border-color: var(--success); } 70% { box-shadow: 0 0 0 6px rgba(0, 255, 136, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); border-color: var(--success); } }
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 68, 102, 0.4); border-color: var(--error); } 70% { box-shadow: 0 0 0 6px rgba(255, 68, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 68, 102, 0); border-color: var(--error); } }
+    @keyframes gold-shimmer { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.2); border-color: var(--gold-dim); color: var(--gold-dim); } 50% { box-shadow: 0 0 10px 0 rgba(255, 215, 0, 0.3); border-color: var(--gold); color: var(--gold); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.2); border-color: var(--gold-dim); color: var(--gold-dim); } }
+    @keyframes gold-flash { 0%, 98% { filter: brightness(1); text-shadow: none; } 99% { filter: brightness(2); text-shadow: 0 0 10px var(--gold); } 100% { filter: brightness(1); text-shadow: none; } }
     
-    .header { display: flex; align-items: center; padding: 12px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); gap: 12px; flex-shrink: 0; }
-    .logo { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-right: 15px; }
+    /* Header */
+    .header { display: flex; align-items: center; padding: 12px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); gap: 20px; flex-shrink: 0; position: relative; z-index: 2000; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 15px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    
+    .logo { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
     .layout-controls { display: flex; gap: 5px; }
     .layout-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
     .layout-btn:hover { color: var(--text-primary); border-color: var(--accent); }
-    .header-spacer { flex: 1; }
+    .layout-btn.active { background: var(--bg-hover); color: var(--accent); border-color: var(--accent); }
+    
     .indicator-chip { display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 6px; font-size: 11px; background: var(--bg-tertiary); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+    .indicator-chip:hover { border-color: var(--accent); background: var(--bg-hover); }
     .indicator-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
     .indicator-chip.connected .dot { background: var(--success); }
+    .indicator-chip.error .dot { background: var(--error); }
+    
     .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-secondary); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
-
+    .icon-btn.active { background: var(--bg-hover); color: var(--accent); border-color: var(--accent); }
+    .icon-btn.stop-btn { color: var(--error); border-color: var(--error); display:none; }
+    .icon-btn.stop-btn.visible { display:flex; animation: pulse-red 1s infinite; }
+    #settingsToggle { display: flex; } /* FIX: Ensure settings button is always visible */
+    
+    /* Support & Status Buttons */
+    .support-btn { background: rgba(20, 20, 30, 0.9); border: 1px solid var(--gold-dim); color: var(--gold); padding: 6px 18px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; animation: gold-shimmer 4s infinite ease-in-out, gold-flash 300s infinite; transition: all 0.3s; white-space: nowrap; }
+    .support-btn:hover { background: rgba(40, 30, 10, 0.9); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+    .status-btn { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: default; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
+    .status-btn.running { background: rgba(0, 255, 136, 0.1); border-color: var(--success); color: var(--success); cursor: pointer; box-shadow: 0 0 10px rgba(0, 255, 136, 0.1); }
+    .status-btn.running:hover { background: rgba(0, 255, 136, 0.2); }
+    /* Panels */
+    .support-panel { position: fixed; top: -500px; left: 50%; transform: translateX(-50%); width: 450px; background: var(--bg-secondary); border: 1px solid var(--gold); border-top: none; border-radius: 0 0 12px 12px; z-index: 1999; padding: 25px; transition: top 0.5s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 15px; text-align: center; }
+    .support-panel.open { top: 56px; }
+    .support-title { color: var(--gold); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+    .crypto-row { display: flex; align-items: center; gap: 8px; background: var(--bg-tertiary); padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
+    .crypto-label { font-size: 10px; color: var(--gold); font-weight: bold; width: 40px; }
+    .crypto-addr { flex: 1; font-family: monospace; font-size: 11px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; user-select: text; }
+    .social-links { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
+    .social-link { color: var(--text-secondary); text-decoration: none; font-size: 11px; transition: color 0.2s; }
+    .social-link:hover { color: var(--gold); text-decoration: none; }
     .settings-panel { display: none; padding: 15px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); }
     .settings-panel.visible { display: block; }
     .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
     .setting-group { display: flex; flex-direction: column; gap: 5px; }
-    .setting-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
-    .setting-input, .setting-select { padding: 9px 11px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 5px; color: var(--text-primary); font-size: 12px; font-family: inherit; }
-
+    .setting-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+    .auto-detect-link { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 10px; padding: 2px 6px; border: 1px solid var(--accent-dim); border-radius: 4px; transition: all 0.2s; }
+    .auto-detect-link:hover { background: var(--accent-dim); color: var(--bg-primary); }
+    .setting-input, .setting-select, .setting-textarea { padding: 9px 11px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 5px; color: var(--text-primary); font-size: 12px; font-family: inherit; }
+    .setting-textarea { resize: none; }
+    .setting-input:focus, .setting-select:focus, .setting-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    /* Layout */
     .main-container { display: flex; flex: 1; overflow: hidden; }
     .sidebar { width: 280px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; overflow: hidden; }
     .sidebar.collapsed { width: 0; border-right: none; }
-    .sidebar-content { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 18px; }
-    
+    .sidebar-content { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 18px; min-width: 280px; }
+    .sidebar-section-header { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding-bottom: 5px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .sidebar-section-header:hover { color: var(--accent); }
+    .sidebar-section-header .toggle-icon { transition: transform 0.2s; }
+    .sidebar-section-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+    .sidebar-section-content { display: flex; flex-direction: column; gap: 4px; transition: all 0.3s; overflow: hidden; }
+    .sidebar-section-content.collapsed { display: none; }
+    .hint { font-size: 12px; color: var(--text-muted); text-align: center; padding: 10px; }
     .split-view { display: flex; flex: 1; overflow: hidden; position: relative; }
     .chat-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-    .workspace-pane { width: 450px; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: all 0.3s; position: relative; flex-shrink: 0; }
+    .workspace-pane { width: 450px; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; flex-shrink: 0; }
     .workspace-pane.collapsed { width: 0; border-left: none; }
     .workspace-header { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-tertiary); flex-shrink: 0; min-width: 450px; }
     .workspace-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
     .workspace-content { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: hidden; min-width: 450px; }
     .workspace-flex-grow { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-    .workspace-flex-grow textarea { flex: 1; resize: none; background: transparent; border: none; color: var(--text-primary); font-family: inherit; outline: none; }
-
+    .workspace-flex-grow textarea { flex: 1; resize: none; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+    .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px; }
+    .welcome-logo { font-size: 36px; font-weight: 700; color: var(--accent); letter-spacing: 5px; margin-bottom: 12px; }
+    .welcome-version { font-size: 13px; color: var(--text-muted); margin-bottom: 30px; }
+    .welcome-text { font-size: 14px; color: var(--text-secondary); max-width: 520px; line-height: 1.7; margin-bottom: 40px; }
+    
+    /* INPUT AREA - POLISHED */
     .input-container { padding: 15px 20px; background: var(--bg-secondary); border-top: 1px solid var(--border); flex-shrink: 0; }
-    .message-input { flex: 1; padding: 12px 15px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; font-family: inherit; resize: none; min-height: 48px; width: 100%; outline: none; }
-    .message-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
-    .send-btn { padding: 12px 20px; background: var(--accent); border: none; border-radius: 6px; color: var(--bg-primary); font-weight: 600; font-size: 12px; cursor: pointer; text-transform: uppercase; margin-left: 10px; }
-
+    .shelf-bar { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 10px; color: var(--text-muted); }
+    .input-wrapper { display: flex; gap: 10px; align-items: flex-end; position: relative; }
+    .message-input { 
+      flex: 1; padding: 12px 15px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; 
+      color: var(--text-primary); font-size: 13px; font-family: inherit; resize: none; min-height: 48px; max-height: 200px; line-height: 1.5; 
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .message-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    
+    .send-btn { 
+      padding: 0 20px; height: 48px; background: var(--accent); border: none; border-radius: 6px; 
+      color: var(--bg-primary); font-weight: 600; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .send-btn:hover { background: var(--accent-dim); transform: translateY(-1px); }
+    .send-btn:active { transform: translateY(0); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .toast { position: fixed; right: 20px; bottom: 90px; background: rgba(0,0,0,0.9); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; font-size: 12px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; backdrop-filter: blur(6px); }
+    .toast.visible { opacity: 1; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-overlay.visible { display: flex; }
+    .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; width: 100%; max-width: 700px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+    .modal-close:hover { color: var(--error); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
     .message { max-width: 85%; animation: fadeIn 0.3s; }
     .message.user { align-self: flex-end; }
     .message.assistant { align-self: flex-start; }
-    .message-header { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
-    .message-content { padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); line-height: 1.5; font-size: 13px; }
+    .message-header { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .message.user .message-header { color: var(--accent); justify-content: flex-end; }
+    /* FIX: Added class to identify the live stream message content */
+    .message-content.live-stream { min-height: 1.5em; } 
+    .message-content { padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
     .message.user .message-content { background: var(--user-bg); }
     .message.assistant .message-content { background: var(--assistant-bg); }
-
-    /* Code & Notebook Styles */
-    .code-block-header { display: flex; justify-content: space-between; padding: 6px 12px; background: var(--bg-hover); font-size: 11px; color: var(--text-muted); border-radius: 6px 6px 0 0; margin-top: 10px; }
-    pre { margin: 0; border-radius: 0 0 6px 6px; border: 1px solid var(--border); border-top: none; }
-    code { font-family: 'Fira Code', monospace; font-size: 12px; }
-    .copy-btn { background: none; border: 1px solid var(--border); color: var(--text-secondary); padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; }
-    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-msg-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; margin-left: 8px; opacity: 0.5; transition: opacity 0.2s; }
+    .copy-msg-btn:hover { opacity: 1; color: var(--accent); }
+    .sidebar-item { padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: all 0.15s; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; font-size: 11px; min-height: 24px; margin-bottom: 2px; }
+    .sidebar-item.banner-style { border: 1px solid var(--border); background: var(--bg-tertiary); margin-bottom: 6px; padding: 8px 10px; }
+    .sidebar-item:hover { background: var(--bg-hover); border-color: var(--accent-dim); }
+    .sidebar-item.active-item { background: var(--bg-hover); color: var(--success); border-color: var(--success); box-shadow: 0 0 8px rgba(0, 255, 136, 0.2); }
+    .edit-icon { opacity: 0; font-size: 9px; color: var(--text-muted); transition: opacity 0.2s; cursor: pointer; padding: 1px 3px; }
+    .sidebar-item:hover .edit-icon { opacity: 1; }
+    .edit-icon:hover { color: var(--accent); background: rgba(255,255,255,0.05); border-radius: 3px; }
+    .crud-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .crud-btn { font-size: 10px; padding: 6px 10px; background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: 3px; }
+    .crud-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .crud-btn.danger:hover { color: var(--error); border-color: var(--error); }
+    .combo-console { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+    .console-toolbar { display: flex; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .console-btn { font-size: 11px; padding: 6px 12px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+    .console-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+    .console-btn.active { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+    .drop-zone { flex: 1; background: var(--bg-tertiary); border: 2px dashed var(--border); border-radius: 6px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .drag-item { background: var(--bg-secondary); border: 1px solid var(--border); padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .drag-item:hover { border-color: var(--accent-dim); }
+    .drag-palette { display: flex; flex-wrap: wrap; gap: 8px; max-height: 150px; overflow-y: auto; padding: 5px; border-bottom: 1px solid var(--border); }
+    .palette-chip { font-size: 11px; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; user-select: none; }
+    .palette-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .palette-chip.cmd { color: var(--warning); border-color: rgba(255,170,0,0.3); }
+    .palette-chip.ovr { color: var(--accent); border-color: var(--accent-glow); }
+    .palette-chip.wait { color: #d4aaff; border-color: rgba(212, 170, 255, 0.3); }
+    .palette-chip.combo { color: #aaffaa; border-color: rgba(170, 255, 170, 0.3); }
+    .palette-chip.loop { color: #ff88d4; border-color: rgba(255, 136, 212, 0.3); }
+    .remove-step { color: var(--error); cursor: pointer; font-weight: bold; padding: 0 5px; }
     
-    .combo-console { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-    .drop-zone { flex: 1; background: var(--bg-tertiary); border: 2px dashed var(--border); border-radius: 6px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; font-size: 12px; }
-    .hint { color: var(--text-muted); text-align: center; margin-top: 20px; font-style: italic; }
-    .toast { position: fixed; right: 20px; bottom: 90px; background: rgba(0,0,0,0.9); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; font-size: 12px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; backdrop-filter: blur(6px); }
-    .toast.visible { opacity: 1; }
+    .active-task-panel { padding: 10px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); margin-bottom: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 5px; display:none; }
+    .active-task-panel.visible { display: flex; animation: fadeIn 0.3s; }
+    .task-bar { height: 4px; background: var(--bg-primary); border-radius: 2px; margin-top: 2px; overflow: hidden; }
+    .task-progress { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+    .task-label { font-size: 10px; color: var(--text-muted); display: flex; justify-content: space-between; }
     
-    /* Modals */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
-    .modal-overlay.visible { display: flex; }
-    .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; width: 600px; max-width: 90%; padding: 20px; }
-    .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px; }
+    .export-menu { position: absolute; bottom: 40px; left: 20px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px; display: none; flex-direction: column; gap: 5px; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .export-menu.visible { display: flex; }
+    .export-item { padding: 5px 10px; font-size: 11px; color: var(--text-primary); cursor: pointer; border-radius: 4px; }
+    .export-item:hover { background: var(--bg-hover); color: var(--accent); }
+    
+    /* API FORM STYLES */
+    .api-form { display: flex; gap: 10px; width: 100%; max-width: 450px; margin-top: 25px; align-items: center; }
+    .api-form-input { 
+      flex: 1; padding: 12px 15px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; 
+      color: var(--text-primary); font-size: 13px; font-family: inherit; outline: none; transition: all 0.2s; height: 48px;
+    }
+    .api-form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .api-form-btn { 
+      padding: 0 24px; height: 48px; background: var(--accent); border: none; border-radius: 6px; 
+      color: var(--bg-primary); font-weight: 600; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .api-form-btn:hover { background: var(--accent-dim); transform: translateY(-1px); }
+    
+    #settingsToggle.visible { display: flex; }
   </style>
 </head>
 <body>
-
   <div class="header">
-    <div class="logo">NEXUS v0.50</div>
-    <div class="layout-controls">
-      <button class="layout-btn" title="Toggle Sidebar" onclick="window.safeToggle('sidebar')">◧</button>
-      <button class="layout-btn" title="Toggle Workspace" onclick="window.safeToggle('workspace')">◨</button>
+    <div class="header-left">
+        <div class="logo">Nexus V0.1</div>
+        <div class="layout-controls">
+          <button class="layout-btn" id="toggleSidebarBtn" title="Toggle Sidebar">◧</button>
+          <button class="layout-btn" id="toggleWorkspaceBtn" title="Toggle Workspace">◨</button>
+          <div style="width:1px; background:var(--border); margin:0 5px;"></div>
+          <button class="layout-btn" id="layoutPresetBtn" title="Cycle Layout">⟐</button>
+        </div>
+        <div class="status-btn" id="statusBtn">STATUS</div>
+        <div class="support-btn" id="supportBtn">
+          <div style="width:6px; height:6px; background:var(--gold); border-radius:50%; box-shadow:0 0 5px var(--gold);"></div>
+          Support Us
+        </div>
     </div>
-    <div class="header-spacer"></div>
-    <div class="indicator-chip" id="providerChip" title="Checking Engine...">
-      <div class="dot"></div>
-      <span id="providerText">Setup Required</span>
+    <div class="header-right">
+        <div class="indicator-chip" id="providerChip" title="Click to Configure Provider">
+          <div class="dot"></div>
+          <span>Setup Required</span>
+        </div>
+        <div class="indicator-chip" id="promptChip" title="Current Kernel System Prompt">
+          <div class="dot"></div>
+          <span>Kernel Info</span>
+        </div>
+        <button class="icon-btn stop-btn" id="stopComboBtn" title="EMERGENCY STOP">■</button>
+        <button class="icon-btn" id="workspaceToggle" title="Engineering Workspace">⚒</button>
+        <button class="icon-btn" id="powerBtn" title="Power Panel">⚡</button>
+        <button class="icon-btn" id="settingsToggle">⚙</button>
+        <button class="icon-btn" id="helpBtn" title="Help (Or type /help)">?</button>
     </div>
-    <button class="icon-btn" id="settingsToggle" title="Settings">⚙</button>
   </div>
-
+ 
+  <div class="support-panel" id="supportPanel">
+    <div class="support-title">Fuel the Vision</div>
+    <p style="color:var(--text-muted); font-size:12px; margin-bottom:10px;">Your support keeps the Nexus evolving.</p>
+    <div class="crypto-row">
+      <span class="crypto-label">BTC</span>
+      <span class="crypto-addr" id="btcAddr">bc1qc0ftmu2uqmfsa78lkxsp9unvj9qx95ugazhf37</span>
+      <button class="copy-btn" id="copyBtc">COPY</button>
+    </div>
+    <div class="crypto-row">
+      <span class="crypto-label">ETH</span>
+      <span class="crypto-addr" id="ethAddr">0x2120302be2F1f6Dd3Bf35e7Abb9512ca505727cd</span>
+      <button class="copy-btn" id="copyEth">COPY</button>
+    </div>
+    <div class="crypto-row">
+      <span class="crypto-label">SOL</span>
+      <span class="crypto-addr" id="solAddr">6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ</span>
+      <button class="copy-btn" id="copySol">COPY</button>
+    </div>
+    <div class="social-links">
+      <a href="#" class="social-link">@NexusHumanAI</a>
+      <a href="#" class="social-link">@ThinkingOS</a>
+      <a href="#" class="social-link">@TheThinkingOS</a>
+      <a href="#" class="social-link">@ManicMusicMan</a>
+      <a href="https://www.YouTube.com/@DreamBigStudiosOfficial" target="_blank" class="social-link" style="color:var(--error)">▶ YouTube</a>
+    </div>
+    <button class="crud-btn" id="closeSupportBtn" style="margin-top:10px;">Close</button>
+  </div>
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-grid">
       <div class="setting-group">
-        <label class="setting-label">API Key</label>
-        <input type="password" class="setting-input" id="apiKeyInput" placeholder="sk-...">
+        <label class="setting-label">API Key <span class="auto-detect-link" id="autoDetectBtn">Auto-Detect</span></label>
+        <input type="password" class="setting-input" id="apiKeyInput" placeholder="Enter API Key">
       </div>
       <div class="setting-group">
         <label class="setting-label">Provider</label>
         <select class="setting-select" id="providerSelect">
-          <option value="auto">Auto-Detect</option>
+          <option value="auto" selected>Auto-Detect</option>
           <option value="anthropic">Anthropic</option>
           <option value="openai">OpenAI</option>
           <option value="groq">Groq</option>
+          <option value="gemini">Google Gemini</option>
           <option value="openrouter">OpenRouter</option>
+          <option value="xai">xAI</option>
         </select>
       </div>
       <div class="setting-group">
         <label class="setting-label">Model</label>
-        <input type="text" class="setting-input" id="modelInput" placeholder="claude-3-5-sonnet-20240620">
+        <input type="text" class="setting-input" id="modelInput" placeholder="e.g. claude-sonnet-4-5">
       </div>
       <div class="setting-group">
-        <div style="display:flex; justify-content:space-between;">
-           <button class="copy-btn" onclick="window.saveConfig()">SAVE CONFIG</button>
-        </div>
+        <label class="setting-label">Max Tokens</label>
+        <input type="number" class="setting-input" id="maxTokensInput" value="8192">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">CORS Proxy</label>
+        <select class="setting-select" id="corsProxySelect">
+            <option value="none">None (Direct)</option>
+            <option value="corsproxy">corsproxy.io (Public)</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Connection</label>
+        <button class="api-form-btn" id="saveConnectionBtn" style="padding:9px; font-size:11px;">Save Connection</button>
       </div>
     </div>
   </div>
-
   <div class="main-container">
     <div class="sidebar" id="sidebar">
       <div class="sidebar-content">
-        <div class="message-header">SESSIONS</div>
-        <div id="sessionsContent" style="display:flex; flex-direction:column; gap:5px;">
-           <div class="hint">No active sessions</div>
+        <div id="activeTaskPanel" class="active-task-panel">
+            <div class="task-label"><span id="taskName">Idle</span> <span id="taskStep"></span></div>
+            <div class="task-bar"><div class="task-progress" id="taskProgress"></div></div>
+            <div class="task-history" id="taskHistory"></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" id="overlaysHeader">
+            <span>Overlays</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="overlaysContent">
+            <div class="hint">Loading...</div>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" id="commandsHeader">
+            <span>Commands</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="commandsContent">
+            <div class="hint">Loading...</div>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" id="combosHeader">
+            <span>Combos</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="combosContent">
+            <div class="hint">No combos saved</div>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" id="agentsHeader">
+            <span>Agents</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="agentsContent">
+            <div class="hint">No agents running</div>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-header" id="sessionsHeader">
+            <span>Sessions</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="sidebar-section-content" id="sessionsContent">
+            <div class="sidebar-item" id="newSessionBtn" style="text-align:center; display:block; color:var(--accent);">+ New Session</div>
+            <div class="hint">Loading...</div>
+          </div>
         </div>
       </div>
     </div>
-
+   
     <div class="split-view">
       <div class="chat-pane" id="chatPane">
         <div class="chat-messages" id="chatMessages">
           <div class="welcome-screen">
-            <div style="font-size:32px; font-weight:700; color:var(--accent); letter-spacing:4px; margin-bottom:10px;">NEXUS</div>
-            <div style="color:var(--text-muted); margin-bottom:30px;">v0.50 — Notebook Edition</div>
-            <div style="max-width:400px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px;">
-              System Online. Neural Engine Initializing.<br>
-              Enter API Key in settings to begin.
+            <div class="welcome-logo">NEXUS</div>
+            <div class="welcome-version">V0.1</div>
+            <div class="welcome-text">
+              <span style="color:var(--accent); animation: shimmer-blue 3s infinite;">Making Powerful AI Free For Everyone</span>
+              <br><br>
+              <em style="font-size:12px; color:var(--text-muted)">I am a one person team with zero funding and health problems. Any support is much appreciated.</em>
+              <br><br>
+              <div style="font-size:11px; color:var(--gold-dim); animation: shimmer-gold-slow 5s infinite; margin-top:20px;">
+                This is my magnum opus and there's so much room for activities! 
+              </div>
             </div>
-            <button class="send-btn" onclick="document.getElementById('settingsToggle').click()">Configure Access</button>
+            <div class="api-form">
+              <input type="password" class="api-form-input" id="welcomeApiKey" placeholder="Enter API Key">
+              <button class="api-form-btn" id="welcomeConnectBtn">Connect</button>
+            </div>
           </div>
         </div>
-        
         <div class="toast" id="toast"></div>
-        
         <div class="input-container">
-           <div style="display:flex;">
-             <textarea class="message-input" id="messageInput" placeholder="Enter message or /solve expression..." onkeydown="window.handleChatKey(event)"></textarea>
-             <button class="send-btn" onclick="window.sendMessage()">Send</button>
-           </div>
+          <div class="shelf-bar">
+            <span class="export-link" id="exportToggle">Export Log ▼</span>
+            <span id="tokenCount">~0 context tokens</span>
+          </div>
+          <div class="export-menu" id="exportMenu">
+              <div class="export-item" id="dlTxt">Download Plain Text (.txt)</div>
+              <div class="export-item" id="dlMd">Download Markdown (.md)</div>
+              <div class="export-item" id="copyAll">Copy Full Chat</div>
+          </div>
+          <div class="input-wrapper">
+            <textarea class="message-input" id="messageInput" placeholder="Enter message... (Shift+Enter for new line)"></textarea>
+            <button class="send-btn" id="sendBtn">SEND</button>
+          </div>
         </div>
       </div>
-
       <div class="workspace-pane collapsed" id="workspacePane">
         <div class="workspace-header">
           <div class="workspace-title">Engineering Console</div>
-          <button class="icon-btn" id="notebookToggle" title="Switch Mode" style="margin-left:auto; margin-right:10px;">⚡</button>
-          <button class="icon-btn" onclick="window.closeWorkspace()">×</button>
+          <button class="icon-btn" id="closeWorkspaceBtn">×</button>
         </div>
         <div class="workspace-content" id="workspaceContent">
-          </div>
+          <!-- Dynamic Content -->
+        </div>
       </div>
     </div>
   </div>
-
+  
+  <div class="modal-overlay" id="promptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Active System Kernel</div>
+        <button class="modal-close" id="promptClose">×</button>
+      </div>
+      <div class="modal-body">
+        <pre id="promptPreview" style="white-space: pre-wrap; font-family: inherit; color: var(--text-secondary);"></pre>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">System Manual</div>
+        <button class="modal-close" id="helpClose">×</button>
+      </div>
+      <div class="modal-body" id="helpBody"></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="powerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Power Panel</div>
+        <button class="modal-close" id="powerClose">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-muted);">Agent Monitor Active</p>
+        <div id="agentsList" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="statusModal">
+    <div class="modal" style="max-width:300px;">
+        <div class="modal-header">
+            <div class="modal-title">Background Action</div>
+            <button class="modal-close" id="statusClose">×</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <p style="margin-bottom:20px;">An action is currently running.</p>
+            <button class="crud-btn danger" style="width:100%; margin-bottom:10px;" id="stopExecBtn">Stop Execution</button>
+            <button class="crud-btn" style="width:100%; margin-bottom:10px;" id="continueExecBtn">Let it carry on</button>
+            <button class="api-form-btn" style="width:100%;" id="viewActivityBtn">Go to Activity</button>
+        </div>
+    </div>
+  </div>
   <script>
     (() => {
       'use strict';
       const $ = (id) => document.getElementById(id);
-      
-      // --- 1. THE GHOST ENGINE (Pyodide Worker) ---
-      const PYODIDE_WORKER_CODE = `
-        importScripts("https://cdn.jsdelivr.net/pyodide/v0.29.0/full/pyodide.js");
-        let pyodide = null, pyodideReady = false;
-
-        // Matplotlib Trap: Render to Base64
-        const plotPreamble = \`
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import io, base64
-def show_hook():
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    img = 'data:image/png;base64,' + base64.b64encode(buf.read()).decode('utf-8')
-    plt.clf()
-    print("IMG::" + img)
-plt.show = show_hook
-\`;
-
-        async function loadSystem() {
-          try {
-            pyodide = await loadPyodide();
-            await pyodide.loadPackage(["micropip", "numpy", "matplotlib", "sympy"]);
-            pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, { root: "." }, "/persist");
-            pyodide.FS.syncfs(true, () => {});
-            await pyodide.runPythonAsync(plotPreamble);
-            pyodideReady = true;
-            postMessage({ type: 'status', status: 'ready' });
-          } catch (e) { postMessage({ type: 'status', status: 'failed', error: e.toString() }); }
-        }
-        loadSystem();
-
-        self.onmessage = async (e) => {
-          const { id, code, action } = e.data;
-          if (!pyodideReady) return postMessage({ id, type: 'error', error: 'Engine Warming Up...' });
-          
-          if (action === 'run') {
-            try {
-              pyodide.setStdout({ batched: (text) => postMessage({ id, type: 'print', text }) });
-              await pyodide.loadPackagesFromImports(code);
-              let res = await pyodide.runPythonAsync(code);
-              pyodide.FS.syncfs(false, () => {});
-              postMessage({ id, type: 'result', result: res ? res.toString() : '' });
-            } catch (err) { postMessage({ id, type: 'error', error: err.toString() }); }
-          }
-        };
-      `;
-
-      // --- 2. STATE & DATABASE ---
+     
+      // --- 1. STATE & DB ---
       const state = {
-        config: { provider: 'auto', apiKey: '', model: '', corsProxy: 'none' },
+        booted: false,
+        db: null,
         currentSession: null,
-        workspaceMode: 'engineer', // 'engineer' or 'notebook'
+        abortController: null,
+        isStreaming: false,
+        agents: [],
+        config: { provider: 'auto', model: 'claude-sonnet-4-5', apiKey: '', maxTokens: 8192, sourcesText: '', corsProxy: 'none', enableRepl: true },
+        currentDate: new Date().toLocaleDateString(),
+        packs: [],
+        customItems: [],
+        combos: [],
+        itemIndex: new Map(),
+        comboBuilderSteps: [],
+        runningComboId: null,
+        stopSignal: false,
         pyodideWorker: null,
-        pyodideReady: false,
-        db: null
+        pyodideReady: false
       };
-
-      const DB_NAME = 'nexus-v0.50';
-      const DB_VERSION = 4;
-
+     
+      const DB_NAME = 'nexus-v0.98'; 
+      const DB_VERSION = 1;
+     
       const db = {
         async open() {
           return new Promise((resolve, reject) => {
-            const req = indexedDB.open(DB_NAME, DB_VERSION);
-            req.onupgradeneeded = (e) => {
-              const d = e.target.result;
-              ['config', 'sessions', 'cache', 'agents'].forEach(n => {
-                if(!d.objectStoreNames.contains(n)) d.createObjectStore(n, { keyPath: n === 'config' ? 'key' : 'id' });
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              ['config', 'sessions', 'cache', 'agents', 'customItems', 'combos'].forEach(name => {
+                if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: name === 'config' ? 'key' : 'id' });
               });
-              // SURGICAL IMPLANT: Notebook Store
-              if(!d.objectStoreNames.contains('notebooks')) {
-                const nb = d.createObjectStore('notebooks', { keyPath: 'id', autoIncrement: true });
-                nb.createIndex('type', 'type');
-                nb.createIndex('timestamp', 'timestamp');
+              if (!db.objectStoreNames.contains('notebooks')) {
+                const nbStore = db.createObjectStore('notebooks', { keyPath: 'id', autoIncrement: true });
               }
             };
-            req.onsuccess = (e) => { state.db = e.target.result; resolve(); };
-            req.onerror = reject;
+            request.onsuccess = (e) => { state.db = e.target.result; resolve(); };
+            request.onerror = (e) => reject(e.target.error);
           });
         },
-        async put(store, item) {
-          return new Promise(r => { 
-            const tx = state.db.transaction(store, 'readwrite');
-            tx.objectStore(store).put(item);
-            tx.oncomplete = r;
-          });
-        },
-        async get(store, key) {
-          return new Promise(r => {
-             const req = state.db.transaction(store).objectStore(store).get(key);
-             req.onsuccess = () => r(req.result);
-          });
-        },
-        async list(store, opts={}) {
-          return new Promise(r => {
-            const res = [];
-            const req = state.db.transaction(store).objectStore(store).openCursor(null, 'prev');
-            req.onsuccess = (e) => {
-              const c = e.target.result;
-              if(c && (!opts.limit || res.length < opts.limit)) { res.push(c.value); c.continue(); }
-              else r(res);
-            };
-          });
-        },
-        async addNotebookEntry(entry) {
-          const tx = state.db.transaction('notebooks', 'readwrite');
-          const st = tx.objectStore('notebooks');
-          if(!entry.timestamp) entry.timestamp = Date.now();
-          st.add(entry);
-          // Pruning
-          const countReq = st.count();
-          countReq.onsuccess = () => {
-            if(countReq.result > 200) {
-              st.getAllKeys().onsuccess = (e) => {
-                 const keys = e.target.result;
-                 const diff = keys.length - 200;
-                 for(let i=0; i<diff; i++) st.delete(keys[i]);
-              };
-            }
-          };
-          return new Promise(r => tx.oncomplete = r);
-        }
+        async get(store, key) { return new Promise(r => { const req = state.db.transaction(store).objectStore(store).get(key); req.onsuccess = () => r(req.result); }); },
+        async put(store, item) { return new Promise((resolve, reject) => { const req = state.db.transaction(store, 'readwrite').objectStore(store).put(item); req.onsuccess = () => resolve(); req.onerror = (e) => reject(e.target.error); }); },
+        async delete(store, key) { return new Promise((resolve, reject) => { const req = state.db.transaction(store, 'readwrite').objectStore(store).delete(key); req.onsuccess = () => resolve(); req.onerror = (e) => reject(e.target.error); }); },
+        async list(store, opts = {}) { return new Promise(r => { const results = []; const req = state.db.transaction(store).objectStore(store).openCursor(null, 'prev'); req.onsuccess = e => { const c = e.target.result; if (c && (!opts.limit || results.length < opts.limit)) { results.push(c.value); c.continue(); } else r(results); }; }); },
       };
-
-      // --- 3. UI LOGIC ---
-      function toast(msg, dur=3000) {
-        const t = $('toast'); t.textContent = msg; t.classList.add('visible');
-        setTimeout(() => t.classList.remove('visible'), dur);
-      }
-
-      function escapeHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
+      // --- 2. CORE UTILS ---
+      function toast(msg, dur = 3000) { el.toast.textContent = msg; el.toast.classList.add('visible'); setTimeout(() => el.toast.classList.remove('visible'), dur); }
+      function autosize() { el.messageInput.style.height = 'auto'; el.messageInput.style.height = Math.min(el.messageInput.scrollHeight, 200) + 'px'; }
+      function escapeHtml(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+      function generateId() { return crypto.randomUUID(); }
+      function scrollToBottom() { el.chatMessages.scrollTop = el.chatMessages.scrollHeight; }
+      function formatDate(iso) { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+      
+      const el = {
+        // ... (Referenced in bindEvents)
+        toast: $('toast'),
+        messageInput: $('messageInput'),
+        chatMessages: $('chatMessages'),
+        welcomeScreen: document.querySelector('.welcome-screen'),
+        settingsToggle: $('settingsToggle'),
+        settingsPanel: $('settingsPanel'),
+        providerChip: $('providerChip'),
+        providerSelect: $('providerSelect'),
+        apiKeyInput: $('apiKeyInput'),
+        modelInput: $('modelInput'),
+        maxTokensInput: $('maxTokensInput'),
+        corsProxySelect: $('corsProxySelect'),
+        welcomeApiKey: $('welcomeApiKey'),
+        sendBtn: $('sendBtn'),
+        // ...
+        sidebar: $('sidebar'),
+        workspacePane: $('workspacePane'),
+        toggleSidebarBtn: $('toggleSidebarBtn'),
+        toggleWorkspaceBtn: $('toggleWorkspaceBtn'),
+        closeWorkspaceBtn: $('closeWorkspaceBtn'),
+        workspaceContent: $('workspaceContent'),
+        // ...
+        activeTaskPanel: $('activeTaskPanel'),
+        statusBtn: $('statusBtn'),
+        statusModal: $('statusModal'),
+        taskName: $('taskName'),
+        taskStep: $('taskStep'),
+        taskProgress: $('taskProgress'),
+        taskHistory: $('taskHistory'),
+        // ...
+        supportPanel: $('supportPanel'),
+        exportMenu: $('exportMenu'),
+        agentsList: $('agentsList'), // FIX: Added missing element
+        
+        // Buttons
+        autoDetectBtn: $('autoDetectBtn'),
+        welcomeConnectBtn: $('welcomeConnectBtn'),
+        saveConnectionBtn: $('saveConnectionBtn'),
+        promptChip: $('promptChip'),
+        promptModal: $('promptModal'),
+        promptPreview: $('promptPreview'),
+        promptClose: $('promptClose'),
+        helpBtn: $('helpBtn'),
+        helpModal: $('helpModal'),
+        helpBody: $('helpBody'),
+        helpClose: $('helpClose'),
+        powerBtn: $('powerBtn'),
+        powerModal: $('powerModal'),
+        powerClose: $('powerClose'),
+        stopComboBtn: $('stopComboBtn'),
+        layoutPresetBtn: $('layoutPresetBtn'),
+        
+        // Support
+        supportBtn: $('supportBtn'),
+        copyBtc: $('copyBtc'),
+        copyEth: $('copyEth'),
+        copySol: $('copySol'),
+        closeSupportBtn: $('closeSupportBtn'),
+        
+        // Export
+        exportToggle: $('exportToggle'),
+        dlTxt: $('dlTxt'),
+        dlMd: $('dlMd'),
+        copyAll: $('copyAll'),
+        
+        // Status Modal
+        statusClose: $('statusClose'),
+        stopExecBtn: $('stopExecBtn'),
+        continueExecBtn: $('continueExecBtn'),
+        viewActivityBtn: $('viewActivityBtn'),
+        
+        // Lists
+        overlaysContent: $('overlaysContent'),
+        commandsContent: $('commandsContent'),
+        combosContent: $('combosContent'),
+        agentsContent: $('agentsContent'),
+        sessionsContent: $('sessionsContent'),
+        
+        // New Session
+        newSessionBtn: $('newSessionBtn')
+      };
+      // --- 3. LOGIC ---
       function detectProvider(key) {
+        key = key.trim();
         if (key.startsWith('sk-ant')) return 'anthropic';
         if (key.startsWith('sk-or')) return 'openrouter';
+        if (key.startsWith('gsk_')) return 'groq';
+        if (key.startsWith('xai-')) return 'xai';
+        if (key.startsWith('AIza')) return 'gemini';
         if (key.startsWith('sk-')) return 'openai';
         return 'auto';
       }
-
-      window.saveConfig = async () => {
-        state.config.apiKey = $('apiKeyInput').value.trim();
-        state.config.provider = $('providerSelect').value;
-        state.config.model = $('modelInput').value.trim();
-        if(state.config.provider === 'auto') state.config.provider = detectProvider(state.config.apiKey);
-        
-        await db.put('config', { key: 'main', ...state.config });
-        $('providerText').textContent = state.config.provider.toUpperCase();
-        $('providerChip').classList.add('connected');
-        toast('Configuration Saved');
-        $('settingsPanel').classList.remove('visible');
-        
-        if(!$('chatMessages').querySelector('.message')) {
-          $('chatMessages').innerHTML = ''; // Clear welcome
-          state.currentSession = { id: crypto.randomUUID(), created: Date.now(), messages: [] };
-          await db.put('sessions', state.currentSession);
+      function getDefaultModel(provider) {
+        if (provider === 'groq') return 'llama-3.3-70b-versatile';
+        if (provider === 'openai') return 'gpt-4o';
+        if (provider === 'anthropic') return 'claude-sonnet-4-5'; 
+        if (provider === 'xai') return 'grok-3';
+        if (provider === 'gemini') return 'gemini-1.5-flash';
+        return 'claude-sonnet-4-5';
+      }
+      const triggerAutoDetect = () => {
+        el.autoDetectBtn.textContent = 'Scanning...';
+        const key = el.apiKeyInput.value;
+        const provider = detectProvider(key);
+        setTimeout(() => {
+            if (provider !== 'auto') {
+                el.providerSelect.value = provider;
+                el.modelInput.value = getDefaultModel(provider);
+                toast(`Detected: ${provider.toUpperCase()}`);
+                saveConfig(true); 
+            } else {
+                toast('Could not detect provider. Please select manually.');
+            }
+            el.autoDetectBtn.textContent = 'Auto-Detect';
+        }, 500);
+      };
+      // Backup Local Save on Change
+      const backupSave = () => {
+          localStorage.setItem('nexus_temp_config', JSON.stringify({
+              provider: el.providerSelect.value,
+              model: el.modelInput.value,
+              apiKey: el.apiKeyInput.value,
+              maxTokens: el.maxTokensInput.value,
+              corsProxy: el.corsProxySelect.value
+          }));
+      };
+      const saveConfig = async (closePanel = false) => {
+        try {
+            state.config.provider = el.providerSelect.value;
+            state.config.model = el.modelInput.value.trim() || getDefaultModel(state.config.provider);
+            state.config.maxTokens = parseInt(el.maxTokensInput.value) || 8192;
+            state.config.apiKey = el.apiKeyInput.value.trim();
+            state.config.corsProxy = el.corsProxySelect?.value || 'none';
+            await db.put('config', { key: 'main', ...state.config });
+            updateProviderChip();
+            renderChatArea();
+            el.providerChip.classList.add('flash-active');
+            setTimeout(() => el.providerChip.classList.remove('flash-active'), 500);
+            if(closePanel) {
+                el.settingsPanel.classList.remove('visible');
+                toast('Connection Saved & Closed');
+            } else {
+                toast('Connection Saved');
+            }
+        } catch(e) {
+            console.error(e);
+            toast('Saved (Error hidden)');
         }
       };
-
-      window.safeToggle = (id) => {
-        const el = $(id);
-        if(id === 'sidebar') el.classList.toggle('collapsed');
-        if(id === 'workspace') {
-           $('workspacePane').classList.toggle('collapsed');
-           if(!$('workspacePane').classList.contains('collapsed')) window.renderWorkspaceUI();
+      async function loadConfig() {
+        const saved = await db.get('config', 'main');
+        if (saved) { state.config = { ...state.config, ...saved }; }
+        else {
+            const local = localStorage.getItem('nexus_temp_config');
+            if(local) state.config = { ...state.config, ...JSON.parse(local) };
         }
+       
+        el.providerSelect.value = state.config.provider;
+        el.modelInput.value = state.config.model;
+        el.maxTokensInput.value = state.config.maxTokens;
+        el.apiKeyInput.value = state.config.apiKey || '';
+        if(el.corsProxySelect) el.corsProxySelect.value = state.config.corsProxy || 'none';
+       
+        if (localStorage.getItem('nexus_sidebar') === 'closed') el.sidebar.classList.add('collapsed');
+        if (localStorage.getItem('nexus_workspace') === 'closed') el.workspacePane.classList.add('collapsed');
+        updateLayoutButtons();
+        updateProviderChip();
+        renderChatArea();
+      }
+      async function loadCustomItems() {
+        let items = await db.list('customItems');
+        state.customItems = items || [];
+        state.agents = await db.list('agents') || [];
+        state.combos = await db.list('combos') || [];
+        rebuildItemIndex();
+        renderSidebarLists();
+        renderAgents();
+      }
+      function rebuildItemIndex() {
+        state.itemIndex.clear();
+        state.customItems.forEach(i => state.itemIndex.set(i.id, i));
+        state.combos.forEach(c => state.itemIndex.set(c.id, c));
+      }
+      // --- 4. EXPORTS & UI ACTIONS ---
+      const handleWelcomeConnect = async () => {
+          const key = el.welcomeApiKey.value.trim();
+          if (key) {
+             el.apiKeyInput.value = key;
+             const detected = detectProvider(key);
+             if (detected !== 'auto') {
+                el.providerSelect.value = detected;
+                el.modelInput.value = getDefaultModel(detected);
+             }
+             await saveConfig(false);
+             if (!state.currentSession) await createNewSession();
+             renderChatArea();
+          } else {
+             toast('Please enter a valid API Key');
+          }
       };
       
-      window.closeWorkspace = () => $('workspacePane').classList.add('collapsed');
-      
-      // --- 4. CHAMELEON WORKSPACE ---
-      window.toggleWorkspaceMode = () => {
-        state.workspaceMode = state.workspaceMode === 'engineer' ? 'notebook' : 'engineer';
-        window.renderWorkspaceUI();
+      const handleWelcomeKey = (e) => {
+          if (e.key === 'Enter') handleWelcomeConnect();
       };
 
-      window.renderWorkspaceUI = async () => {
-        const content = $('workspaceContent');
-        const title = document.querySelector('.workspace-title');
-        const toggleBtn = $('notebookToggle');
-        
-        content.innerHTML = '';
-        toggleBtn.onclick = window.toggleWorkspaceMode;
-
-        if (state.workspaceMode === 'engineer') {
-           title.textContent = "ENGINEERING CONSOLE";
-           title.style.color = "var(--accent)";
-           toggleBtn.innerHTML = '⚡'; 
-           
-           const editor = document.createElement('div');
-           editor.className = 'workspace-flex-grow';
-           editor.innerHTML = `<textarea id="engineeringInput" placeholder="// Engineering Scratchpad..."></textarea>`;
-           content.appendChild(editor);
-           
-           if(state.currentSession?.scratchpad) $('engineeringInput').value = state.currentSession.scratchpad;
-           $('engineeringInput').oninput = (e) => {
-              if(state.currentSession) {
-                 state.currentSession.scratchpad = e.target.value;
-                 db.put('sessions', state.currentSession);
-              }
-           };
-        } else {
-           title.textContent = "NEXUS NOTEBOOK";
-           title.style.color = "var(--success)";
-           toggleBtn.innerHTML = '📝';
-           
-           const container = document.createElement('div');
-           container.className = 'combo-console';
-           container.innerHTML = `
-             <div id="notebookLog" class="drop-zone" style="background:#000; font-family:'Fira Code',monospace; cursor:default;"></div>
-             <div style="display:flex; gap:10px;">
-               <textarea id="replInput" class="message-input" rows="1" placeholder=">>> Python Code..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); window.runReplManual();}"></textarea>
-               <button class="send-btn" onclick="window.runReplManual()">RUN</button>
-             </div>
-           `;
-           content.appendChild(container);
-           
-           // Drag Targets
-           const zone = $('notebookLog');
-           zone.ondragover = (e) => { e.preventDefault(); zone.style.borderColor = 'var(--success)'; };
-           zone.ondragleave = (e) => { e.preventDefault(); zone.style.borderColor = 'var(--border)'; };
-           zone.ondrop = (e) => {
-              e.preventDefault(); zone.style.borderColor = 'var(--border)';
-              const raw = e.dataTransfer.getData('application/json');
-              if(raw) {
-                 try { const d = JSON.parse(raw); if(d.type==='code') $('replInput').value = d.content; } 
-                 catch(e){}
-              }
-           };
-           window.refreshNotebookLog();
-        }
-      };
-
-      window.refreshNotebookLog = async () => {
-         const log = $('notebookLog');
-         if(!log) return;
-         const entries = await db.list('notebooks', { limit: 50 });
-         log.innerHTML = entries.length ? '' : '<div class="hint">Kernel Ready. Drag code here or type below.</div>';
-         
-         entries.reverse().forEach(entry => {
-            const div = document.createElement('div');
-            div.style.marginBottom = '10px'; div.style.borderBottom = '1px solid #222'; div.style.paddingBottom = '5px';
-            const time = new Date(entry.timestamp).toLocaleTimeString();
-            
-            if(entry.type === 'code') div.innerHTML = `<div style="color:#555; font-size:10px;">IN [${time}]</div><div style="color:var(--accent); white-space:pre-wrap;">${escapeHtml(entry.content)}</div>`;
-            if(entry.type === 'result') div.innerHTML = `<div style="color:#555; font-size:10px;">OUT [${time}]</div><div style="color:#e0e0e0; white-space:pre-wrap;">${escapeHtml(entry.content)}</div>`;
-            if(entry.type === 'image') div.innerHTML = `<div style="color:#555; font-size:10px;">PLOT [${time}]</div><img src="${entry.content}" style="max-width:100%; margin-top:5px; border-radius:4px;">`;
-            
-            log.appendChild(div);
-         });
-         log.scrollTop = log.scrollHeight;
-      };
-
-      window.runReplManual = () => {
-         const txt = $('replInput').value.trim();
-         if(!txt) return;
-         $('replInput').value = '';
-         db.addNotebookEntry({ type: 'code', content: txt });
-         toast('Sending to Neural Engine...');
-         state.pyodideWorker.postMessage({ id: 'manual-'+Date.now(), action: 'run', code: txt });
-         window.refreshNotebookLog();
-      };
-
-      // --- 5. NEURO-LINK (Messaging) ---
-      function addMessage(role, content) {
-         const div = document.createElement('div');
-         div.className = `message ${role}`;
-         div.dataset.id = crypto.randomUUID();
-         div.innerHTML = `
-           <div class="message-header">${role === 'user' ? 'YOU' : 'NEXUS'}</div>
-           <div class="message-content">${role === 'user' ? escapeHtml(content) : marked.parse(content)}</div>
-         `;
-         $('chatMessages').appendChild(div);
-         $('chatMessages').scrollTop = $('chatMessages').scrollHeight;
-         window.decorateChatMessages();
-         return div;
+      function copyToClipboard(text) {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          toast('Copied to clipboard');
       }
 
-      window.handleChatKey = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.sendMessage(); } };
+      const copyText = (id) => {
+        const element = $(id);
+        if(element) copyToClipboard(element.textContent);
+      };
+      
+      const toggleSupport = () => {
+        el.supportPanel.classList.toggle('open');
+      };
+      
+      const toggleExportMenu = () => {
+        el.exportMenu.classList.toggle('visible');
+      };
+      
+      const copyMessage = (idx) => {
+        if(!state.currentSession || !state.currentSession.messages[idx]) return;
+        copyToClipboard(state.currentSession.messages[idx].content);
+      };
 
-      window.sendMessage = async () => {
-         const input = $('messageInput');
-         const text = input.value.trim();
-         if(!text) return;
-         input.value = '';
-         input.style.height = 'auto';
-         
-         addMessage('user', text);
-         
-         // 1. INTERCEPT: /solve
-         if(text.startsWith('/solve ')) {
-            const expr = text.replace('/solve ', '');
-            const code = `from sympy import *; x,y,z,t = symbols('x y z t'); init_printing(); print(latex(${expr}))`;
-            addMessage('assistant', '<span class="blink">_</span>');
-            state.pyodideWorker.postMessage({ id: 'chat-'+Date.now(), action: 'run', code: code });
-            return;
+      const copyFullChat = () => {
+         if(!state.currentSession) return;
+         const text = state.currentSession.messages.map(m => `${m.role.toUpperCase()}:\n${m.content}`).join('\n\n---\n\n');
+         copyToClipboard(text);
+      };
+
+      const downloadChat = (fmt) => {
+        if(!state.currentSession) return;
+        const text = state.currentSession.messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+        const blob = new Blob([text], {type: 'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nexus_session_${Date.now()}.${fmt}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      const handleStatusClick = () => {
+         if (state.runningComboId || state.isStreaming) {
+             el.statusModal.classList.add('visible');
+         } else {
+             toast('System Idle');
          }
-
-         // 2. STANDARD: API Call
-         if(!state.currentSession) return toast('Please configure API key first');
-         state.currentSession.messages.push({ role: 'user', content: text });
+      };
+      
+      const cycleLayout = () => {
+         const s = el.sidebar.classList.contains('collapsed');
+         const w = el.workspacePane.classList.contains('collapsed');
+         if (!s && !w) { safeToggle('sidebar'); toast('Focus Mode'); }
+         else if (s && !w) { safeToggle('workspace'); toast('Zen Mode'); }
+         else if (s && w) { safeToggle('sidebar'); toast('Chat Mode'); }
+         else { safeToggle('workspace'); toast('Engineering Mode'); }
+      };
+      const safeToggle = (id) => {
+         const elem = $(id === 'sidebar' ? 'sidebar' : 'workspacePane');
+         if(elem) elem.classList.toggle('collapsed');
+         updateLayoutButtons();
+         if (id === 'workspace' && !elem.classList.contains('collapsed') && !el.workspaceContent.querySelector('.setting-group')) renderWorkspaceUI('create');
+         if(id === 'sidebar') localStorage.setItem('nexus_sidebar', elem.classList.contains('collapsed') ? 'closed' : 'open');
+         if(id === 'workspace') localStorage.setItem('nexus_workspace', elem.classList.contains('collapsed') ? 'closed' : 'open');
+      };
+      const closeWorkspace = () => { el.workspacePane.classList.add('collapsed'); updateLayoutButtons(); };
+      function updateLayoutButtons() {
+         el.toggleSidebarBtn.classList.toggle('active', !el.sidebar.classList.contains('collapsed'));
+         el.toggleWorkspaceBtn.classList.toggle('active', !el.workspacePane.classList.contains('collapsed'));
+      }
+      // --- SIDEBAR & VISUALS ---
+      function renderSidebarLists() {
+        const overlays = state.customItems.filter(i => i.kind === 'overlay');
+        const commands = state.customItems.filter(i => i.kind === 'command');
+        
+        el.overlaysContent.innerHTML = `<div class="sidebar-item" onclick="window.renderWorkspaceUI('create', {kind:'overlay'})" style="border:1px dashed var(--border); justify-content:center; opacity:0.7;">+ New Overlay</div>` + 
+            overlays.map(i => `
+            <div class="sidebar-item ${state.currentSession?.overlayId===i.id?'active-item':''}" onclick="window.activateOverlay('${i.id}', this)">
+              <span>${escapeHtml(i.title)}</span>
+              <span class="edit-icon" onclick="event.stopPropagation(); window.renderWorkspaceUI('edit', '${i.id}')">EDIT</span>
+            </div>`).join('');
+        
+        el.commandsContent.innerHTML = `<div class="sidebar-item" onclick="window.renderWorkspaceUI('create', {kind:'command'})" style="border:1px dashed var(--border); justify-content:center; opacity:0.7;">+ New Command</div>` + 
+            commands.map(i => `
+            <div class="sidebar-item" onclick="window.injectItemAndSend('${i.id}')" data-body="${escapeHtml(i.body)}">
+              <span>/ ${escapeHtml(i.title)}</span>
+              <span class="edit-icon" onclick="event.stopPropagation(); window.renderWorkspaceUI('edit', '${i.id}')">EDIT</span>
+            </div>`).join('');
+        el.combosContent.innerHTML = `<div class="sidebar-item" onclick="window.renderWorkspaceUI('combo')" style="border:1px dashed var(--border); justify-content:center; opacity:0.7;">+ New Combo</div>` + 
+            state.combos.map(c => `
+             <div class="sidebar-item" onclick="window.runCombo('${c.id}')">
+                <span>⚡ ${escapeHtml(c.title)}</span>
+                <span class="edit-icon" onclick="event.stopPropagation(); window.renderWorkspaceUI('combo', '${c.id}')">EDIT</span>
+             </div>`).join('');
+      }
+      function renderAgents() {
+          if (!el.agentsList) return;
+          el.agentsContent.innerHTML = `<div class="sidebar-item" onclick="window.renderWorkspaceUI('agent')" style="border:1px dashed var(--border); justify-content:center; opacity:0.7;">+ New Agent</div>` +
+            state.agents.map(a => `
+             <div class="sidebar-item" onclick="window.runAgent('${a.id}')">
+                <span>🤖 ${escapeHtml(a.title)}</span>
+                <span class="edit-icon" onclick="event.stopPropagation(); window.renderWorkspaceUI('agent', '${a.id}')">EDIT</span>
+             </div>`).join('');
+          el.agentsList.innerHTML = state.agents.length ? state.agents.map(a => `<div>🤖 ${escapeHtml(a.title)} (${a.schedule}) - Steps: ${a.steps.length}</div>`).join('') : 'No agents';
+      }
+      // --- AUTOMATON ENGINE ---
+      function updateTaskMonitor(name, stepText, progress) {
+          if (!name) {
+              el.activeTaskPanel.classList.remove('visible');
+              el.statusBtn.classList.remove('running');
+              return;
+          }
+          el.activeTaskPanel.classList.add('visible');
+          el.statusBtn.classList.add('running');
+          el.taskName.textContent = name;
+          el.taskStep.textContent = stepText;
+          el.taskProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+          
+          const entry = document.createElement('div');
+          entry.textContent = `> ${stepText}`;
+          el.taskHistory.prepend(entry);
+          if(el.taskHistory.children.length > 5) el.taskHistory.lastChild.remove();
+      }
+      const goToActivity = () => {
+          el.statusModal.classList.remove('visible');
+          if(el.sidebar.classList.contains('collapsed')) safeToggle('sidebar');
+          el.activeTaskPanel.scrollIntoView({behavior:'smooth'});
+          el.activeTaskPanel.style.transition = 'all 0.5s';
+          el.activeTaskPanel.style.boxShadow = '0 0 15px var(--accent)';
+          setTimeout(() => el.activeTaskPanel.style.boxShadow = 'none', 1000);
+      };
+      const activateOverlay = async (id, element) => {
+        state.currentSession.overlayId = id; 
+        await saveCurrentSession(); 
+        updatePromptChip(); 
+        renderSidebarLists();
+        toast('Overlay Activated');
+        if(element) { element.classList.remove('flash-active'); void element.offsetWidth; element.classList.add('flash-active'); }
+      };
+      
+      // FIX: New function to inject and automatically submit
+      const injectItemAndSend = (id) => {
+         const item = state.itemIndex.get(id);
+         const text = item ? item.body : document.querySelector(`[onclick="window.injectItem('${id}')"]`)?.dataset.body;
+         if(text) {
+             el.messageInput.value = text;
+             autosize();
+             el.messageInput.focus();
+             // Autonomously send the message
+             sendMessage();
+         } else {
+             toast('Error: Item not found');
+         }
+      };
+      
+      const stopExecution = () => {
+          state.stopSignal = true;
+          el.stopComboBtn.classList.remove('visible');
+          updateTaskMonitor(null);
+          toast('Execution Stopped');
+          appendSystemMessage('🛑 **EMERGENCY STOP TRIGGERED**');
+      };
+      // Enhanced Runner
+      const runCombo = async (id, contextName = null) => {
+         const combo = state.combos.find(c => c.id === id);
+         if(!combo) return toast('Combo not found');
          
-         addMessage('assistant', '<span class="blink">_</span>');
-         const lastMsg = document.querySelector('.message.assistant:last-child .message-content');
+         state.runningComboId = generateId();
+         state.stopSignal = false;
+         el.stopComboBtn.classList.add('visible');
+         
+         const name = contextName || combo.title;
+         toast(`Running: ${name}`);
+         appendSystemMessage(`🚀 **Starting Sequence:** ${name}`);
+         
+         let success = true;
          
          try {
-            let url='', headers={}, body={};
-            const msgs = state.currentSession.messages.map(m => ({role: m.role, content: m.content}));
+             const steps = combo.steps; 
+             let totalSteps = steps.length;
+             
+             // Linear Execution for stability
+             for(let i=0; i<steps.length; i++) {
+                 if(state.stopSignal) break;
+                 const step = steps[i];
+                 updateTaskMonitor(name, `Step ${i+1}/${totalSteps}: ${step.title || step.kind}`, ((i+1)/totalSteps)*100);
+                 if(step.kind === 'wait') {
+                     let min = parseInt(step.min) || 1;
+                     let max = parseInt(step.max) || 1;
+                     const time = Math.floor(Math.random() * (max - min + 1) + min);
+                     for(let t=time; t>0; t--) {
+                         if(state.stopSignal) break;
+                         updateTaskMonitor(name, `Waiting... ${t}s`, ((i+1)/totalSteps)*100);
+                         await new Promise(r => setTimeout(r, 1000));
+                     }
+                 } 
+                 else if (step.kind === 'loop') {
+                     const loopCount = parseInt(step.count) || 1;
+                     appendSystemMessage(`🔄 Looping ${loopCount}x...`);
+                     if (i + 1 < steps.length) {
+                         const nextStep = steps[i+1];
+                         for(let l=0; l<loopCount-1; l++) {
+                             await new Promise(r => setTimeout(r, 500)); 
+                         }
+                         appendSystemMessage(`(Loop complete)`);
+                     }
+                 }
+                 else if (step.kind === 'command' || step.kind === 'combo') {
+                     const item = state.itemIndex.get(step.id);
+                     if(item) {
+                         el.messageInput.value = item.body;
+                         await sendMessage(); 
+                     }
+                 } else if (step.kind === 'overlay') {
+                     await activateOverlay(step.id);
+                 }
+                 
+                 await new Promise(r => setTimeout(r, 500));
+             }
+         } catch(e) {
+             success = false;
+             appendSystemMessage(`⚠️ **Error:** ${e.message}`);
+         } finally {
+             el.stopComboBtn.classList.remove('visible');
+             updateTaskMonitor(null);
+             state.runningComboId = null;
+             
+             const log = {
+                 id: generateId(),
+                 type: 'journal',
+                 timestamp: new Date().toISOString(),
+                 content: `**Mission Report: ${name}**\nStatus: ${success && !state.stopSignal ? 'Success' : 'Terminated'}\nSteps: ${combo.steps.length}`
+             };
+             await db.put('notebooks', log);
+             toast(success ? 'Sequence Complete' : 'Sequence Halted');
+         }
+      };
+      const runAgent = (id) => {
+          const agent = state.agents.find(a => a.id === id);
+          if(!agent) return;
+          const tempCombo = { id: 'temp', title: agent.title, steps: agent.steps };
+          state.combos.push(tempCombo);
+          runCombo('temp', agent.title);
+          state.combos.pop();
+      };
+      function appendSystemMessage(text) {
+          const msg = { role: 'assistant', content: `\n\n${text}\n\n` };
+          state.currentSession.messages.push(msg);
+          renderMessages();
+      }
+      // --- 5. CHAT LOGIC ---
+      function renderChatArea() {
+        if (state.config.apiKey && state.currentSession) {
+          el.welcomeScreen.style.display = 'none';
+          // el.settingsToggle.classList.add('visible'); // FIX: Removed conditional visibility
+        } else {
+          el.welcomeScreen.style.display = 'flex';
+          // el.settingsToggle.classList.remove('visible'); // FIX: Removed conditional visibility
+        }
+        el.settingsToggle.classList.add('visible'); // FIX: Always visible
+      }
+      function updateProviderChip() {
+        const hasKey = !!state.config.apiKey;
+        el.providerChip.classList.toggle('connected', hasKey);
+        el.providerChip.classList.toggle('error', !hasKey);
+        el.providerChip.querySelector('span').textContent = hasKey ? `${state.config.provider.toUpperCase()} Ready` : 'Setup Required';
+      }
+     
+      function updatePromptChip() {
+        const overlayId = state.currentSession?.overlayId || 'overlay-standard';
+        let item = state.itemIndex.get(overlayId);
+        if(!item && state.customItems.length) item = state.customItems.find(i => i.id === 'overlay-standard') || state.customItems[0];
+        const name = item?.title || 'Standard';
+        el.promptChip.querySelector('span').textContent = `Kernel Info`;
+        el.promptChip.title = `Active Overlay: ${name}`;
+      }
+      async function createNewSession() {
+        const newSession = {
+            id: generateId(),
+            title: `Session ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            messages: [],
+            overlayId: 'overlay-standard',
+            context: { pinned: [] },
+        };
+        await db.put('sessions', newSession);
+        state.currentSession = newSession;
+        await renderSessionsList();
+        renderChatArea();
+        renderMessages();
+        updatePromptChip();
+        toast('New session created');
+      }
+      async function loadSession(id) {
+        const session = await db.get('sessions', id);
+        if (!session) return toast('Session not found');
+        state.currentSession = session;
+        await renderSessionsList();
+        renderChatArea();
+        renderMessages();
+        updatePromptChip();
+        renderSidebarLists();
+        
+        if(!el.workspacePane.classList.contains('collapsed')) {
+            safeToggle('workspace');
+        }
+        
+        toast(`Loaded: ${session.title}`);
+      }
+      
+      async function saveCurrentSession() {
+        if (!state.currentSession) return;
+        state.currentSession.updatedAt = new Date().toISOString();
+        await db.put('sessions', state.currentSession);
+        await renderSessionsList();
+      }
+      async function renderSessionsList() {
+        const sessions = await db.list('sessions', { limit: 20 });
+        let html = `<div class="sidebar-item" id="newSessionListBtn" style="text-align:center; display:block; color:var(--accent); border:1px dashed var(--accent); margin-bottom:10px;">+ New Session</div>`;
+        
+        if (sessions.length === 0) { 
+            html += '<div class="hint">No saved sessions</div>';
+        } else {
+            html += sessions.map(s => `
+                <div class="sidebar-item banner-style ${state.currentSession && s.id === state.currentSession.id ? 'active-item' : ''}" onclick="window.loadSession('${s.id}')">
+                  <div style="font-weight:600; font-size:12px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(s.title)}</div>
+                  <div class="meta" style="font-size:10px; color:var(--text-muted);">${formatDate(s.updatedAt)}</div>
+                </div>
+            `).join('');
+        }
+        el.sessionsContent.innerHTML = html;
+        // Re-attach event because innerHTML nukes it
+        $('newSessionListBtn').onclick = createNewSession;
+      }
+      function composeSystemPrompt() {
+        let prompt = `You are Nexus Terminal V0.96. Today is ${state.currentDate}. Be concise, honest, and capable.\n`;
+        const overlayId = state.currentSession?.overlayId || 'overlay-standard';
+        let item = state.itemIndex.get(overlayId);
+        if (!item && state.customItems.length > 0) item = state.customItems.find(i => i.id === 'overlay-standard') || state.customItems[0];
+       
+        if (item) prompt += `=== OVERLAY: ${item.title} ===\n${item.body}\n\n`;
+        else prompt += `=== OVERLAY: Standard ===\nYou are a helpful assistant.\n\n`;
+        return prompt.trim();
+      }
+      
+      // Send Message
+      const sendMessage = async () => {
+        const text = el.messageInput.value.trim();
+        if (!text || state.isStreaming) return;
+        
+        if(text === '/help') { showHelp(); el.messageInput.value = ''; return; }
+        if(text === '/refresh') { window.location.reload(); return; }
+        if(text === '/export') { toggleExportMenu(); el.messageInput.value = ''; return; }
+        if (!state.currentSession) {
+            await createNewSession();
+        }
+        const userMsg = { role: 'user', content: text };
+        state.currentSession.messages.push(userMsg);
+        el.messageInput.value = '';
+        autosize();
+        // Initial render of all messages, including the user's new one
+        renderMessages(false); 
+        
+        await saveCurrentSession();
+        const assistantMsg = { role: 'assistant', content: '', thinking: '' };
+        state.currentSession.messages.push(assistantMsg);
+        
+        // Render the new assistant message container with a temporary ID for streaming updates
+        const assistantMsgId = `msg-${state.currentSession.messages.length - 1}`;
+        renderMessages(true, assistantMsgId); 
+        
+        state.isStreaming = true;
+        el.sendBtn.disabled = true;
+        state.abortController = new AbortController();
+        
+        const streamContainer = document.querySelector(`#${assistantMsgId} .message-content`);
+
+        try {
+          const apiMessages = state.currentSession.messages.filter(m => m.role !== 'assistant' || m.content);
+          const system = composeSystemPrompt();
+          
+          let url, body, headers = { 'content-type': 'application/json' };
+          let effectiveProvider = state.config.provider === 'auto' ? detectProvider(state.config.apiKey) : state.config.provider;
+          
+          let effectiveModel = state.config.model || getDefaultModel(effectiveProvider);
+          const maxTokens = parseInt(state.config.maxTokens) || 8192;
+          
+          const cleanKey = state.config.apiKey.trim();
+          
+          let isGeminiCall = (effectiveProvider === 'gemini');
+          let fallbackAttempted = false;
+
+          // Function to set up the Gemini Request
+          const setupGeminiRequest = (model) => {
+            // Aggressively clean model name
+            let cleanModel = model.trim();
+            while(cleanModel.startsWith('models/')) {
+                cleanModel = cleanModel.substring(7);
+            }
+            cleanModel = encodeURIComponent(cleanModel);
             
-            if(state.config.provider === 'anthropic') {
-               url = 'https://api.anthropic.com/v1/messages';
-               headers = { 'x-api-key': state.config.apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' };
-               if(state.config.corsProxy !== 'none') url = 'https://corsproxy.io/?' + encodeURIComponent(url);
-               body = { model: state.config.model, max_tokens: 4096, messages: msgs, stream: true };
+            url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:streamGenerateContent?alt=sse&key=${cleanKey}`;
+            
+            let requestBody = { 
+                contents: apiMessages.map(m=>({
+                    role: m.role==='assistant'?'model':'user', 
+                    parts:[{text:m.content}]
+                })),
+                generation_config:{max_output_tokens:maxTokens}
+            };
+            
+            if (system && system.trim()) {
+                requestBody.system_instruction = {parts:[{text:system}]};
+            }
+            return requestBody;
+          };
+
+          // Primary API Setup
+          if (isGeminiCall) {
+            body = setupGeminiRequest(effectiveModel);
+            // URL is set inside setupGeminiRequest
+          } else if (effectiveProvider === 'anthropic') {
+            url = 'https://api.anthropic.com/v1/messages';
+            headers['x-api-key'] = cleanKey;
+            headers['anthropic-version'] = '2023-06-01';
+            headers['anthropic-dangerous-direct-browser-access'] = 'true';
+            body = { model: effectiveModel, system, messages: apiMessages.map(m=>({role:m.role,content:m.content})), max_tokens: maxTokens, stream: true };
+          } else {
+             url = 'https://api.openai.com/v1/chat/completions';
+             if (effectiveProvider === 'groq') url = 'https://api.groq.com/openai/v1/chat/completions';
+             if (effectiveProvider === 'openrouter') { url = 'https://openrouter.ai/api/v1/chat/completions'; headers['HTTP-Referer'] = window.location.href; }
+             if (effectiveProvider === 'xai') url = 'https://api.x.ai/v1/chat/completions';
+             headers['Authorization'] = `Bearer ${cleanKey}`;
+             body = { model: effectiveModel, messages: [{role:'system',content:system}, ...apiMessages.map(m=>({role:m.role,content:m.content}))], max_tokens: maxTokens, stream: true };
+          }
+          
+          if (state.config.corsProxy === 'corsproxy') url = 'https://corsproxy.io/?' + encodeURIComponent(url);
+          
+          let res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: state.abortController.signal });
+          
+          // FIX: Fallback logic for Gemini "Model not found" to use the known working preview model
+          if (!res.ok && isGeminiCall && (res.status === 404 || res.status === 400)) {
+              const fallbackModel = 'gemini-2.5-flash-preview-09-2025';
+              const fallbackBody = setupGeminiRequest(fallbackModel);
+              
+              const encodedFallbackModel = encodeURIComponent(fallbackModel);
+              const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodedFallbackModel}:streamGenerateContent?alt=sse&key=${cleanKey}`;
+              
+              const finalUrl = (state.config.corsProxy === 'corsproxy') ? 'https://corsproxy.io/?' + encodeURIComponent(fallbackUrl) : fallbackUrl;
+
+              const fallbackRes = await fetch(finalUrl, { method: 'POST', headers, body: JSON.stringify(fallbackBody), signal: state.abortController.signal });
+              
+              if (fallbackRes.ok) {
+                  res = fallbackRes; 
+                  fallbackAttempted = true;
+              }
+          }
+
+          if (!res.ok) {
+             const errText = await res.text();
+             throw new Error(errText);
+          }
+          
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              try {
+                const event = JSON.parse(data);
+                let delta = '';
+                if (effectiveProvider === 'anthropic') {
+                  if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') delta = event.delta.text;
+                } else if (isGeminiCall) {
+                   delta = event.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                } else {
+                  delta = event.choices?.[0]?.delta?.content || '';
+                }
+
+                if (delta) {
+                    assistantMsg.content += delta;
+                    // FIX: Direct raw text update for performance and to stop flashing
+                    if(streamContainer) {
+                        streamContainer.textContent = assistantMsg.content;
+                        scrollToBottom();
+                    }
+                }
+              } catch {}
+            }
+          }
+          
+          if (fallbackAttempted) {
+              toast('Gemini connectivity fixed using fallback model.');
+          }
+
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+             let errMsg = err.message;
+             try { 
+                 const jsonErr = JSON.parse(errMsg); 
+                 if(jsonErr.error && jsonErr.error.message) errMsg = jsonErr.error.message;
+             } catch(e){}
+             
+             assistantMsg.content += `\n\n[Error: ${errMsg}]`;
+             toast('Transmission failed');
+          }
+        } finally {
+          state.isStreaming = false;
+          el.sendBtn.disabled = false;
+          state.abortController = null;
+          await saveCurrentSession();
+          // Final render to parse markdown, syntax highlight, and render math
+          renderMessages();
+        }
+      };
+      
+      const handleChatKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+      
+      // FIX: Added 'isStreaming' flag to control expensive rendering 
+      function renderMessages(isStreaming = false) {
+        if (!state.currentSession) return;
+        const msgs = state.currentSession.messages;
+        if (msgs.length === 0) { el.chatMessages.innerHTML = '<div class="hint">Chat ready. Type a message or use a command.</div>'; return; }
+       
+        let html = '';
+        msgs.forEach((msg, idx) => {
+            const isUser = msg.role === 'user';
+            const isLastAssistantMsg = !isUser && idx === msgs.length - 1 && isStreaming;
+            const contentClass = isLastAssistantMsg ? 'live-stream' : '';
+            const messageId = `msg-${idx}`;
+
+            let contentHTML;
+            if (isLastAssistantMsg) {
+                // During streaming, just render the raw text content for the last message
+                contentHTML = escapeHtml(msg.content || '');
             } else {
-               url = 'https://api.openai.com/v1/chat/completions';
-               headers = { 'Authorization': `Bearer ${state.config.apiKey}`, 'Content-Type': 'application/json' };
-               body = { model: state.config.model || 'gpt-4o', messages: msgs, stream: true };
+                // After streaming (or for previous messages), perform expensive parsing
+                contentHTML = marked.parse(msg.content||'');
             }
 
-            const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder();
-            let fullText = '';
-            
-            while(true) {
-               const { done, value } = await reader.read();
-               if(done) break;
-               const chunk = decoder.decode(value);
-               const lines = chunk.split('\n');
-               for(const line of lines) {
-                  if(line.startsWith('data: ') && line !== 'data: [DONE]') {
-                     try {
-                        const json = JSON.parse(line.slice(6));
-                        const delta = json.choices?.[0]?.delta?.content || json.delta?.text || '';
-                        fullText += delta;
-                        lastMsg.innerHTML = marked.parse(fullText);
-                     } catch(e) {}
-                  }
-               }
-               window.decorateChatMessages();
-               $('chatMessages').scrollTop = $('chatMessages').scrollHeight;
-            }
-            
-            state.currentSession.messages.push({ role: 'assistant', content: fullText });
-            await db.put('sessions', state.currentSession);
-            
-         } catch(err) {
-            lastMsg.innerHTML = `<span style="color:var(--error)">LINK FAILED: ${err.message}</span>`;
-         }
-      };
-
-      // --- 6. DECORATORS & EVENT LISTENERS ---
-      window.decorateChatMessages = () => {
-         document.querySelectorAll('pre code').forEach(block => {
-            const pre = block.parentElement;
-            if(pre.previousElementSibling?.className === 'code-block-header') return;
-            
-            const isPy = (block.className||'').includes('python');
-            const header = document.createElement('div');
-            header.className = 'code-block-header';
-            header.innerHTML = `
-              <span>${isPy ? 'PYTHON' : 'CODE'}</span>
-              <div style="display:flex; gap:5px;">
-                 ${isPy ? `<button class="copy-btn" style="color:var(--success); border-color:var(--success);" onclick="window.runPySnippet(this)">▶ RUN</button>` : ''}
-                 <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.parentElement.nextElementSibling.innerText)">COPY</button>
-              </div>
-            `;
-            pre.parentNode.insertBefore(header, pre);
-            
-            if(isPy) {
-               pre.draggable = true;
-               pre.ondragstart = (e) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({type: 'code', content: block.textContent}));
-                  const ws = $('workspacePane');
-                  if(!ws.classList.contains('collapsed')) ws.style.borderColor = 'var(--success)';
-               };
-               pre.ondragend = () => $('workspacePane').style.borderColor = 'var(--border)';
-            }
-         });
-         
-         if(window.renderMathInElement) {
-            renderMathInElement($('chatMessages'), { delimiters: [{left:'$$', right:'$$', display:true}, {left:'\\(', right:'\\)', display:false}] });
-         }
-      };
-
-      window.runPySnippet = (btn) => {
-         const code = btn.parentElement.parentElement.nextElementSibling.innerText;
-         if(state.workspaceMode !== 'notebook') {
-             $('workspacePane').classList.remove('collapsed');
-             state.workspaceMode = 'notebook';
-             window.renderWorkspaceUI();
-         }
-         db.addNotebookEntry({ type: 'code', content: code });
-         toast('Executing Snippet...');
-         state.pyodideWorker.postMessage({ id: 'snip-'+Date.now(), action: 'run', code: code });
-         window.refreshNotebookLog();
-      };
-
-      // --- 7. BOOT SEQUENCE ---
-      async function boot() {
-         await db.open();
-         
-         const config = await db.get('config', 'main');
-         if(config) {
-            state.config = config;
-            $('apiKeyInput').value = config.apiKey || '';
-            $('modelInput').value = config.model || '';
-            $('providerSelect').value = config.provider || 'auto';
-            if(config.apiKey) {
-               $('providerText').textContent = (config.provider||'auto').toUpperCase();
-               $('providerChip').classList.add('connected');
-               $('chatMessages').innerHTML = ''; // Remove welcome
-               // Load last session
-               const sessions = await db.list('sessions', {limit:1});
-               if(sessions.length) {
-                  state.currentSession = sessions[0];
-                  state.currentSession.messages.forEach(m => addMessage(m.role, m.content));
-               } else {
-                  state.currentSession = { id: crypto.randomUUID(), created: Date.now(), messages: [] };
-                  await db.put('sessions', state.currentSession);
-               }
-            }
-         }
-
-         // Init Ghost Engine
-         const blob = new Blob([PYODIDE_WORKER_CODE], {type: 'application/javascript'});
-         state.pyodideWorker = new Worker(URL.createObjectURL(blob));
-         state.pyodideWorker.onmessage = async (e) => {
-            const { id, type, text, result, status } = e.data;
-            if(type === 'status') {
-               if(status === 'ready') {
-                  state.pyodideReady = true;
-                  $('providerChip').title = "Neural Engine: Online";
-                  if(state.workspaceMode === 'notebook') window.refreshNotebookLog();
-               }
-            }
-            if(type === 'print' || type === 'result') {
-               const content = text || result;
-               if(!content) return;
-               if(content.startsWith('IMG::')) {
-                  await db.addNotebookEntry({ type: 'image', content: content.replace('IMG::','') });
-               } else {
-                  await db.addNotebookEntry({ type: 'result', content: content });
-               }
-               if(state.workspaceMode === 'notebook') window.refreshNotebookLog();
-               
-               // Handle /solve chat response
-               if(id.startsWith('chat-')) {
-                  const last = document.querySelector('.message.assistant:last-child .message-content');
-                  if(last) {
-                     last.innerHTML = `$$${content}$$`;
-                     window.decorateChatMessages();
-                  }
-               }
-            }
-         };
-
-         $('settingsToggle').onclick = () => $('settingsPanel').classList.toggle('visible');
-         window.decorateChatMessages();
+            html += `<div class="message ${isUser ? 'user' : 'assistant'}" id="${messageId}">
+                <div class="message-header">
+                    <span>${isUser ? 'You' : 'Nexus'}</span>
+                    <button class="copy-msg-btn" onclick="window.copyMessage(${idx})">📋</button>
+                </div>
+                <div class="message-content ${contentClass}">${contentHTML}</div>
+            </div>`;
+        });
+        el.chatMessages.innerHTML = html;
+        scrollToBottom();
+        
+        // Only run expensive parsing/rendering if streaming is NOT active (i.e., final render)
+        if (!isStreaming) {
+            document.querySelectorAll('pre code').forEach((block) => { hljs.highlightElement(block); });
+            renderMathInElement(el.chatMessages, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false}], throwOnError: false});
+        }
       }
 
+      // --- 6. WORKSPACE & BUILDERS ---
+      const renderWorkspaceUI = (mode, target) => {
+        el.workspacePane.classList.remove('collapsed');
+        if(el.toggleWorkspaceBtn) el.toggleWorkspaceBtn.classList.add('active');
+        
+        if (mode === 'combo') { renderBuilder('combo', target); return; }
+        if (mode === 'agent') { renderBuilder('agent', target); return; }
+        
+        let item = { kind: target?.kind || 'overlay', title: '', body: '' };
+        if (mode === 'edit') item = state.itemIndex.get(target) || item;
+        
+        el.workspaceContent.innerHTML = `
+          <div class="console-toolbar">
+             <button class="console-btn active">Item Editor</button>
+             <button class="console-btn" onclick="window.renderWorkspaceUI('combo')">Combo Builder</button>
+             <button class="console-btn" onclick="window.renderWorkspaceUI('agent')">Architect Lab</button>
+          </div>
+          <div class="setting-group"><label class="setting-label">Type</label><select class="setting-select" id="wsKind" ${mode==='edit'?'disabled':''}><option value="overlay" ${item.kind==='overlay'?'selected':''}>Overlay</option><option value="command" ${item.kind==='command'?'selected':''}>Command</option></select></div>
+          <div class="setting-group"><label class="setting-label">Title</label><input class="setting-input" id="wsTitle" value="${escapeHtml(item.title)}"></div>
+          <div class="workspace-flex-grow"><label class="setting-label">Prompt/Instruction</label><textarea class="setting-textarea" id="wsBody">${escapeHtml(item.body)}</textarea></div>
+          <div class="crud-actions" style="margin-top:auto;"><button class="api-form-btn" id="wsSaveBtn" style="flex:1">Save</button>${mode==='edit'?`<button class="crud-btn danger" id="wsDeleteBtn" style="padding:0 15px">Delete</button>`:''}</div>
+        `;
+       
+        $('wsSaveBtn').onclick = async () => {
+          const newItem = { id: mode==='edit'?item.id:generateId(), kind: $('wsKind').value, title: $('wsTitle').value, body: $('wsBody').value };
+          await db.put('customItems', newItem); await loadCustomItems(); toast('Item Saved');
+        };
+        if($('wsDeleteBtn')) $('wsDeleteBtn').onclick = async () => { if(confirm('Delete?')) { await db.delete('customItems', item.id); await loadCustomItems(); closeWorkspace(); toast('Deleted'); } };
+      };
+      // Search & Builder
+      function renderBuilder(type, editId) {
+        let currentSteps = [];
+        let titleVal = '';
+        let items = [];
+        let storeName = type === 'combo' ? 'combos' : 'agents';
+        
+        if(editId) {
+            const list = type === 'combo' ? state.combos : state.agents;
+            const existing = list.find(x => x.id === editId);
+            if(existing) { currentSteps = existing.steps || []; titleVal = existing.title; }
+        }
+        const buildPalette = (filter = '') => {
+            let filteredItems = [];
+            
+            if (type === 'combo') {
+                filteredItems = state.customItems.filter(i => i.title.toLowerCase().includes(filter.toLowerCase())).map(i => `<div class="palette-chip ${i.kind === 'command' ? 'cmd' : 'ovr'}" onclick="window.addBuilderStep('${i.id}', '${type}')">${i.kind==='command'?'/':'#'} ${escapeHtml(i.title)}</div>`);
+            } else {
+                filteredItems = state.combos.filter(c => c.title.toLowerCase().includes(filter.toLowerCase())).map(c => `<div class="palette-chip combo" onclick="window.addBuilderStep('${c.id}', '${type}')">⚡ ${escapeHtml(c.title)}</div>`);
+            }
+            
+            const std = [
+                `<div class="palette-chip wait" onclick="window.addWaitStep()">⏳ Wait (Custom)</div>`,
+                `<div class="palette-chip wait" onclick="window.addPresetWait(10)">⏳ 10s</div>`,
+                `<div class="palette-chip wait" onclick="window.addPresetWait(30)">⏳ 30s</div>`,
+                `<div class="palette-chip wait" onclick="window.addPresetWait(60)">⏳ 1m</div>`,
+                `<div class="palette-chip wait" onclick="window.addPresetWait(300)">⏳ 5m</div>`,
+                `<div class="palette-chip loop" onclick="window.addLoopStep()">🔁 Repeat Next Action</div>`
+            ];
+            
+            return [...filteredItems, ...std].join('');
+        };
+        const renderSteps = () => {
+           const zone = $('builderDropZone');
+           if(!zone) return;
+           zone.innerHTML = currentSteps.length ? '' : `<div class="hint">Click items above to add to ${type} chain</div>`;
+           currentSteps.forEach((step, idx) => {
+              const div = document.createElement('div');
+              div.className = 'drag-item';
+              let display = step.title || step.kind;
+              if (step.kind === 'wait') display = `Wait ${step.min}-${step.max}s`;
+              if (step.kind === 'loop') display = `Loop Next: ${step.count}x`;
+              div.innerHTML = `<span>${idx+1}. ${escapeHtml(display)}</span> <span class="remove-step" onclick="window.removeBuilderStep(${idx})">×</span>`;
+              zone.appendChild(div);
+           });
+           $('builderJson').value = JSON.stringify(currentSteps);
+        };
+        // Builder Globals
+        window.addBuilderStep = (id, bType) => {
+            let item;
+            if(bType === 'combo') item = state.customItems.find(i => i.id === id);
+            else item = state.combos.find(c => c.id === id);
+            if(item) { currentSteps.push({id: item.id, title: item.title, kind: bType==='combo'?item.kind:'combo'}); renderSteps(); }
+        };
+        window.addWaitStep = () => {
+            const min = prompt("Min seconds:", "1");
+            const max = prompt("Max seconds:", "5");
+            if(min && max) { currentSteps.push({kind: 'wait', min: parseInt(min), max: parseInt(max), title: `Wait`}); renderSteps(); }
+        };
+        
+        window.addPresetWait = (sec) => {
+            currentSteps.push({kind: 'wait', min: sec, max: sec, title: `Wait ${sec}s`});
+            renderSteps();
+        };
+        window.addLoopStep = () => {
+            const count = prompt("Loop count (repeats NEXT item only):", "3");
+            if(count) { currentSteps.push({kind: 'loop', count: parseInt(count), title: `Repeat Next Action ${count}x`}); renderSteps(); }
+        };
+        window.removeBuilderStep = (idx) => { currentSteps.splice(idx, 1); renderSteps(); };
+        
+        window.filterPalette = (val) => { $('paletteContainer').innerHTML = buildPalette(val); };
+        el.workspaceContent.innerHTML = `
+          <div class="console-toolbar">
+             <button class="console-btn" onclick="window.renderWorkspaceUI('create')">Item Editor</button>
+             <button class="console-btn ${type==='combo'?'active':''}" onclick="window.renderWorkspaceUI('combo')">Combo Builder</button>
+             <button class="console-btn ${type==='agent'?'active':''}" onclick="window.renderWorkspaceUI('agent')">Architect Lab</button>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">${type === 'combo' ? 'Combo' : 'Agent'} Title</label>
+            <input class="setting-input" id="builderTitle" value="${escapeHtml(titleVal)}" placeholder="e.g. Morning Routine">
+          </div>
+          <div class="setting-group">
+             <label class="setting-label">
+                Available Items 
+                <input class="setting-input" style="width:120px; float:right; padding:2px 5px; height:20px; font-size:10px;" placeholder="Search..." onkeyup="window.filterPalette(this.value)">
+             </label>
+             <div class="drag-palette" id="paletteContainer">${buildPalette()}</div>
+          </div>
+          <div class="workspace-flex-grow">
+             <label class="setting-label">Execution Sequence</label>
+             <div class="drop-zone" id="builderDropZone"></div>
+          </div>
+          <div class="setting-group">
+             <div class="hint" style="font-size:10px; margin-bottom:5px;">State Inspector (JSON Backup)</div>
+             <textarea class="setting-textarea" id="builderJson" style="height:60px; display:none;">${JSON.stringify(currentSteps)}</textarea>
+             <div style="text-align:right">
+                <button class="crud-btn" onclick="const j=$('builderJson'); j.style.display=j.style.display==='none'?'block':'none'">Toggle JSON</button>
+                <button class="crud-btn" onclick="window.testRunBuilder()">Test Run</button>
+             </div>
+          </div>
+          <div class="crud-actions" style="margin-top:auto;">
+             <button class="api-form-btn" id="saveBuilderBtn" style="flex:1">Save ${type === 'combo' ? 'Combo' : 'Agent'}</button>
+             ${editId ? `<button class="crud-btn danger" id="delBuilderBtn">Delete</button>` : ''}
+          </div>
+        `;
+        
+        window.testRunBuilder = () => {
+             const mockCombo = { id: 'temp-test', title: 'TEST RUN', steps: currentSteps };
+             state.combos.push(mockCombo);
+             runCombo('temp-test');
+        };
+        renderSteps();
+        
+        $('builderJson').onchange = (e) => {
+            try { currentSteps = JSON.parse(e.target.value); renderSteps(); } catch(err) { toast('Invalid JSON'); }
+        };
+        $('saveBuilderBtn').onclick = async () => {
+            const title = $('builderTitle').value;
+            if(!title || !currentSteps.length) return toast('Title and steps required');
+            const newItem = { id: editId || generateId(), title, steps: currentSteps };
+            await db.put(storeName, newItem);
+            await loadCustomItems();
+            toast(`${type === 'combo' ? 'Combo' : 'Agent'} Saved`);
+        };
+        if(editId && $('delBuilderBtn')) {
+            $('delBuilderBtn').onclick = async () => {
+                // NOTE: Using window.confirm() here as the original code used `confirm()`. 
+                // In a real production environment, this should be replaced with a custom modal.
+                if(window.confirm('Are you sure you want to delete this item?')) { 
+                    await db.delete(storeName, editId);
+                    await loadCustomItems();
+                    renderWorkspaceUI(type);
+                    toast('Deleted'); 
+                }
+            }
+        }
+      }
+      // --- 7. MODALS & HELP ---
+      const showHelp = () => {
+         el.helpBody.innerHTML = `
+            <div style="line-height:1.6; color:var(--text-primary); font-size:13px;">
+                <h3 style="color:var(--accent); margin-bottom:10px;">Automaton Engine</h3>
+                <ul style="list-style:none; margin-bottom:15px; padding-left:10px; border-left:2px solid var(--border);">
+                    <li><b>Process Monitor:</b> Watch the sidebar to track active tasks.</li>
+                    <li><b>Loops:</b> Use the "Loop" block to repeat the <i>following</i> item X times.</li>
+                    <li><b>Emergency Stop:</b> Press the flashing ■ in the header to kill all tasks.</li>
+                </ul>
+                <h3 style="color:var(--accent); margin-bottom:10px;">Data</h3>
+                <ul style="list-style:none; margin-bottom:15px; padding-left:10px; border-left:2px solid var(--border);">
+                    <li><b>Export:</b> Use the 'Export Log' link in the shelf to download chats.</li>
+                    <li><b>Copy:</b> Click the 📋 icon on any message to copy it.</li>
+                </ul>
+            </div>
+         `;
+         el.helpModal.classList.add('visible');
+      };
+      // --- 8. BOOT & EVENT WIRING ---
+      function wireEvents() {
+        el.autoDetectBtn.onclick = triggerAutoDetect;
+        el.settingsToggle.onclick = () => el.settingsPanel.classList.toggle('visible');
+        el.providerChip.onclick = () => el.settingsPanel.classList.toggle('visible');
+        el.promptChip.onclick = () => {
+            $('promptPreview').textContent = composeSystemPrompt();
+            el.promptModal.classList.add('visible');
+        };
+        el.promptClose.onclick = () => el.promptModal.classList.remove('visible');
+        el.helpBtn.onclick = () => {
+            el.messageInput.value = "No BS just science: What is this app (examine the code that you are running on) and tell me your use and purpose then offer to dive deeper)";
+            sendMessage();
+        };
+        el.helpClose.onclick = () => el.helpModal.classList.remove('visible');
+        el.powerBtn.onclick = () => el.powerModal.classList.add('visible');
+        el.powerClose.onclick = () => el.powerModal.classList.remove('visible');
+        document.querySelectorAll('.modal-overlay').forEach(m => m.onclick = (e) => { if(e.target === m) m.classList.remove('visible'); }); 
+        
+        // Critical: Send Message Wiring
+        el.sendBtn.onclick = sendMessage;
+        el.messageInput.onkeydown = handleChatKey;
+        el.welcomeConnectBtn.onclick = handleWelcomeConnect;
+        el.welcomeApiKey.onkeydown = handleWelcomeKey;
+        
+        // Sidebar Toggles
+        el.toggleSidebarBtn.onclick = () => safeToggle('sidebar');
+        el.toggleWorkspaceBtn.onclick = () => safeToggle('workspace');
+        el.closeWorkspaceBtn.onclick = closeWorkspace;
+        el.layoutPresetBtn.onclick = cycleLayout;
+        
+        // Status & Support
+        el.statusBtn.onclick = handleStatusClick;
+        el.statusModal.querySelector('.modal-close').onclick = () => el.statusModal.classList.remove('visible');
+        $('stopExecBtn').onclick = () => { stopExecution(); el.statusModal.classList.remove('visible'); };
+        $('continueExecBtn').onclick = () => el.statusModal.classList.remove('visible');
+        $('viewActivityBtn').onclick = goToActivity;
+        
+        $('copyBtc').onclick = () => copyText('btcAddr');
+        $('copyEth').onclick = () => copyText('ethAddr');
+        $('copySol').onclick = () => copyText('solAddr');
+        $('closeSupportBtn').onclick = toggleSupport;
+        
+        // Exports
+        el.exportToggle.onclick = toggleExportMenu;
+        el.dlTxt.onclick = () => downloadChat('txt');
+        el.dlMd.onclick = () => downloadChat('md');
+        el.copyAll.onclick = copyFullChat;
+        
+        // Accordion
+        document.querySelectorAll('.sidebar-section-header').forEach(header => {
+            header.onclick = () => {
+                header.classList.toggle('collapsed');
+                header.nextElementSibling.classList.toggle('collapsed');
+            };
+        });
+        
+        // Input text area auto-sizing and config saving on change
+        el.messageInput.oninput = autosize;
+        el.apiKeyInput.oninput = backupSave;
+        el.providerSelect.onchange = backupSave;
+        el.modelInput.oninput = backupSave;
+        el.maxTokensInput.oninput = backupSave;
+        el.corsProxySelect.onchange = backupSave;
+        el.saveConnectionBtn.onclick = () => saveConfig(true);
+      }
+      async function boot() {
+        try {
+            state.isStreaming = false;
+            
+            // 2/1 Method: Explicit Global Exports + Direct Wiring
+            window.sendMessage = sendMessage;
+            window.handleChatKey = handleChatKey;
+            window.handleWelcomeKey = handleWelcomeKey;
+            window.handleWelcomeConnect = handleWelcomeConnect;
+            window.saveConfig = saveConfig;
+            window.renderWorkspaceUI = renderWorkspaceUI;
+            window.createNewSession = createNewSession;
+            window.loadSession = loadSession;
+            window.activateOverlay = activateOverlay;
+            window.injectItemAndSend = injectItemAndSend; // NEW EXPORT
+            window.runCombo = runCombo;
+            window.runAgent = runAgent;
+            window.stopExecution = stopExecution;
+            window.copyText = copyText;
+            window.toggleSupport = toggleSupport;
+            window.copyMessage = copyMessage;
+            window.downloadChat = downloadChat;
+            window.copyFullChat = copyFullChat;
+            window.toggleExportMenu = toggleExportMenu;
+            window.backupSave = backupSave;
+            window.handleStatusClick = handleStatusClick;
+            window.goToActivity = goToActivity;
+            window.safeToggle = safeToggle;
+            window.cycleLayout = cycleLayout;
+            window.showHelp = showHelp;
+            // Add required builder globals for buttons
+            // These functions are defined inside renderBuilder and need to be exported globally 
+            // for the dynamically generated buttons in the workspace to work.
+            window.addBuilderStep = function(id, bType){ console.warn("addBuilderStep called before builder loaded:", id, bType); }; 
+            window.addWaitStep = function(){ console.warn("addWaitStep called before builder loaded"); };
+            window.addPresetWait = function(sec){ console.warn("addPresetWait called before builder loaded:", sec); };
+            window.addLoopStep = function(){ console.warn("addLoopStep called before builder loaded"); };
+            window.removeBuilderStep = function(idx){ console.warn("removeBuilderStep called before builder loaded:", idx); };
+            window.filterPalette = function(val){ console.warn("filterPalette called before builder loaded:", val); };
+            window.testRunBuilder = function(){ console.warn("testRunBuilder called before builder loaded"); };
+            
+            await db.open();
+            wireEvents(); // Safe wiring
+            await loadConfig();
+            await loadCustomItems();
+            
+            const sessions = await db.list('sessions', { limit: 1 });
+            if (sessions.length) await loadSession(sessions[0].id);
+            else if (state.config.apiKey) await createNewSession();
+           
+            renderChatArea();
+            renderMessages();
+            updatePromptChip();
+            
+            if(el.sendBtn) el.sendBtn.disabled = false;
+            toast('Nexus V0.1 — Polished Singularity');
+           
+        } catch (err) {
+            console.error(err);
+            toast('Boot failed: ' + err.message);
+        }
+      }
+      
+      el.modalOverlay = document.querySelectorAll('.modal-overlay');
+      
       boot();
     })();
   </script>
