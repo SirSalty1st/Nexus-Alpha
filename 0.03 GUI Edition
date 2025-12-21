@@ -232,17 +232,18 @@
     <div class="support-title">☕ Support This Project</div>
     <div class="crypto-row">
         <span class="crypto-label">BTC</span>
-        <span class="crypto-addr" id="btcAddr">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span>
+        <span class="crypto-addr" id="btcAddr">bc1qc0ftmu2uqmfsa78lkxsp9unvj9qx95ugazhf37
+</span>
         <button class="crud-btn" id="copyBtc">Copy</button>
     </div>
     <div class="crypto-row">
         <span class="crypto-label">ETH</span>
-        <span class="crypto-addr" id="ethAddr">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span>
+        <span class="crypto-addr" id="ethAddr">0x2120302be2F1f6Dd3Bf35e7Abb9512ca505727cd</span>
         <button class="crud-btn" id="copyEth">Copy</button>
     </div>
     <div class="crypto-row">
         <span class="crypto-label">SOL</span>
-        <span class="crypto-addr" id="solAddr">7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV</span>
+        <span class="crypto-addr" id="solAddr">6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ</span>
         <button class="crud-btn" id="copySol">Copy</button>
     </div>
     <div class="social-links">
