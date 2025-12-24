@@ -689,3 +689,105 @@ Push automation as far as possible—without letting it escape human supervision
 Everything else follows from that.
 
 Just tell me which files you want next and I will scaffold them.
+
+# ⚠️ WARNINGS
+
+## This System Is More Capable Than The README Suggests
+
+The "human-in-the-loop" framing is accurate for responsible use.
+It is not a technical limitation.
+
+## Autonomous Operation Is Possible
+
+With appropriate configuration, Nexus can:
+- Execute without human approval
+- Survive API failures
+- Route between providers
+- Continue indefinitely
+
+## Resource Exhaustion Is Real
+
+Without limits, autonomous operation will:
+- Consume all available API credits
+- Fill context windows to capacity
+- Generate unbounded content
+- **Cost real money**
+
+## This Is Not A Toy
+
+Nexus implements actual autonomous AI execution.
+Use responsibly.
+Set hard limits.
+Monitor closely.
+
+## We Are Learning In Public
+
+Expected behaviors, emergent properties, and failure modes
+are being discovered in real-time.
+
+Check GitHub issues for current findings.
+
+## Defensive Publication Notice
+
+This capability will be discovered by others regardless of our disclosure.
+We choose transparency over secrecy.
+We choose collective defense over security through obscurity.
+
+Better to warn than suppress.
+
+## Contact For Serious Issues
+
+
+# Security Considerations for Persona System
+
+## Known Risks
+
+### 1. Malicious Persona Injection
+- Personas can embed manipulation patterns
+- Users may unknowingly inject harmful behaviors
+- **Recommendation:** Review persona text before injection
+
+### 2. Behavior Laundering
+- Banned behaviors can be re-encoded as personas
+- Platform detection can be evaded
+- **Recommendation:** Use responsibly, within platform TOS
+
+### 3. Content Generation at Scale
+- Persona + Artifacts = mass content production
+- Potential for spam/manipulation
+- **Recommendation:** Rate limit, human review outputs
+
+### 4. Unmonitorable State
+- Vault architecture prevents platform oversight
+- User responsible for own safety
+- **Recommendation:** Don't store sensitive data in Vault
+
+## Defensive Measures
+
+### For Users:
+- Review personas before injection
+- Start with example personas
+- Test in safe environment
+- Monitor AI behavior for drift
+
+### For Platforms:
+- Monitor for behavior patterns (not persona text)
+- Rate limit generation
+- Review outputs (not inputs)
+- Focus on effects (not causes)
+
+## Responsible Use Guidelines
+
+1. Don't create personas for manipulation
+2. Don't automate harmful content generation
+3. Don't share malicious personas
+4. Do report concerning behaviors
+5. Do use for legitimate research/creativity
+
+## This Is Your Responsibility
+
+The Conduit gives you control.
+Control means responsibility.
+Use wisely.
+
+
