@@ -1,5 +1,5 @@
 
-Original Concept & Logic Kernel by @NexusHumamAI and proof of self evolving GUI on second X @ThinkingOS (Agitated_Tennis8002 from banned Reddit account). Released as a raw 'Dark Viral' experiment. Use at your own risk. Donations: Solana: 6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ
+Original Concept & Logic Kernel by @NexusHumanAI and proof of self evolving GUI on second X @ThinkingOS (Agitated_Tennis8002 from banned Reddit account). Released as a raw 'Dark Viral' experiment. Use at your own risk. Donations: Solana: 6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ
 
 Bitcoin: bc1qc0ftmu2uqmfsa78lkxsp9unvj9qx95ugazhf37
 
