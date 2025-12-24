@@ -21,7 +21,7 @@
 1. **Download:** Click `Code` -> `Download ZIP`.
 2. **Launch:** Open `Nexus_GUI.html` in Chrome/Edge.
 3. **Key:** Enter your API Key (Stored locally in your browser only).
-4. Place in GUI Evo prompt as an overlay and enable it. (found in this GitHub)
+4. Place in GUI Evo prompt as an overlay and enable it. (Prompt: https://github.com/SirSalty1st/Nexus-Alpha/blob/main/GUI%20Evo%20Prompt%200.01)
 5. Confirm it is the current constitution running on the GUI as the kernel.
 6. Let it decide what it wants to do itself or prompt it's behaviour.
 
