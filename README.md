@@ -1,3 +1,10 @@
+
+Original Concept & Logic Kernel by @ThinkingOS (Agitated_Tennis8002 from banned Reddit account). Released as a raw 'Dark Viral' experiment. Use at your own risk. Donations: Solana: 6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ
+
+Bitcoin: bc1qc0ftmu2uqmfsa78lkxsp9unvj9qx95ugazhf37
+
+Ethereum: 0x2120302be2F1f6Dd3Bf35e7Abb9512ca505727cd
+
 NEXUS OS is a creative tool designed to run entirely within a single chat window, acting like a smart operating system that helps users brainstorm ideas, plan strategies, build systems, and create content—especially for social platforms like Twitter (now X). For everyday people (laymans), think of it as a helpful assistant that structures your thoughts without needing apps or files; it generates plans, drafts tweets, or organizes personal routines, but it stays honest about its limits—no secret memory, no real-world actions, and it won't give advice on sensitive topics like health or law. It's all text-based, with "rituals" like a morning creative session to kickstart your day, making complex tasks feel manageable and fun without overwhelming you.
 
 For power users and coders, this prompt transforms a language model into a modular, rule-based OS with stacks (like presets for creators, builders, or life management), modes (verbs like /idea for brainstorming or /ship for finalizing content), and rituals (pre-defined workflows triggered by phrases like "forge 20 hooks"). It enforces no-persistence design—everything resets per session unless users paste saved "packs" (text summaries)—promoting explicit state management akin to stateless programming. Coders will appreciate the evolution system via visible "Evolution Proposals" for tweaking the prompt itself, ensuring transparency and avoiding hidden states, while handling edge cases like adversarial requests through polite refusals and workarounds.
