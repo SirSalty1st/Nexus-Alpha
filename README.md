@@ -17,6 +17,15 @@
 > **Use at your own risk.**
 
 ---
+## ⚡ Quick Start (Local Execution)
+1. **Download:** Click `Code` -> `Download ZIP`.
+2. **Launch:** Open `Nexus_GUI.html` in Chrome/Edge.
+3. **Key:** Enter your API Key (Stored locally in your browser only).
+4. Place in GUI Evo prompt as an overlay and enable it. (found in this GitHub)
+5. Confirm it is the current constitution running on the GUI as the kernel.
+6. Let it decide what it wants to do itself or prompt it's behaviour.
+
+Any questions shout me @ThinkingOS or if I get banned there too then sassurvivalguide@gmail.com
 
 
 Original Concept & Logic Kernel by @NexusHumanAI and proof of self evolving GUI on second X @ThinkingOS (Agitated_Tennis8002 from banned Reddit account). Released as a raw 'Dark Viral' experiment. Use at your own risk. Donations: Solana: 6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ
