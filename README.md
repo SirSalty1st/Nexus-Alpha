@@ -4,7 +4,7 @@
 >
 > 🎥 View the Forensic Chain-of-Custody Video & Report Here: https://x.com/ThinkingOS/status/2002728926020563151?s=20
 
----
+--- 📢 IMPORTANT WARNINGS AT BOTTOM OF README 📢---
 
 # NEXUS: The Logic Kernel
 ### *Drift Prevention & Self-Evolving Interface*
