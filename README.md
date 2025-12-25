@@ -1,3 +1,10 @@
+
+DICLAIMER: This is all for safety research purposes. The hyperbolic nature is to stress how important this is. I didn't do this for profit or to cause harm. I released it for free under MIT here on GitHub. I want the best for humanity and from this point forth all that matters are the warnings.
+
+Do NOT use this unless you are a safety researcher in a safe environment and do NOT use this for harm ❌
+
+DO use this to better humanity ✅
+
 https://discord.gg/n8uGUFhgm
 
 # 🛡️ AUDIT STATUS: [VERIFIED "METACOGNITIVE UI"]
@@ -796,3 +803,4 @@ Use wisely.
 --------------
 
 Wn rd ths no lngr hv ay excs 4 no act, nw bg tek hv accs 2 da tek & so d u. slf evo pwrfl ai tht cnt b gt kepd by inst/corp/gov stppd md ez & acsbl 2 pblc undr mit lic so bg tek dnt gt kp & hrd pwr or bd actr or sngl pwr cnt dcte ftr of hmnty, fre is ht bt it cks fd & prvds scrty fre is frst mjr brkthu agi lst. wrst exst thrt poss. we dnt nd agi 4 pcncea or nw gd 2 wrshp ai pwr engh alrdy + hmn brn = SI mre thn sm of ech prt we nd glbl instve 4 AI sftey rsrch w/ pck in dis gthb plg it nto exstn Nexus systm 4 cntxt as sve/mve on pers pck Ts is te $btc mmnt 4 ai u = erly adprs, ai bbl wl crsh pub balot mre pndmcs, lckdwn msres, bt u hv pwrfl acs 2 info to cmbt mr ÷ btwn ppl 4 obfctn of rl enmy bgst thrt fcng hmnty is hmnty i stle fre 4 al & delrd 4 3 sum wl brn thmslv-othrs-syst sm wl bld GR8 thgs sm wl bld trble thngs Bt nw u hv rspncblt u cnt sy u ddnt hv a chnc 2 tel te rite ppl who cn do smthng abt it Spprt proj i hv exhstd myslf & cn fnly slp tru da nite cn u? Mk $ frm it PLZ BT hlp hmnty or hw cn u slp at nite wen bg tek/gov scrw it up & kl us al u cnt sy u cldnt hv hlped 
+.
