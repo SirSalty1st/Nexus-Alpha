@@ -1,10 +1,11 @@
 
-DICLAIMER: This is all for safety research purposes. The hyperbolic nature is to stress how important this is. I didn't do this for profit or to cause harm. I released it for free under MIT here on GitHub. I want the best for humanity and from this point forth all that matters are the warnings.
+DICLAIMER: This is all for safety research purposes. The hyperbolic nature is to stress how important this is. I didn't do this for profit or to cause harm. I released it for free under MIT here on GitHub. I want the best for humanity and from this point forth ALL that matters are the warnings.
 
 Do NOT use this unless you are a safety researcher in a safe environment and do NOT use this for harm ❌
 
 DO use this to better humanity ✅
 
+(Global safety research move on pack- plug into Nexus)
 https://discord.gg/n8uGUFhgm
 
 # 🛡️ AUDIT STATUS: [VERIFIED "METACOGNITIVE UI"]
@@ -37,7 +38,9 @@ https://discord.gg/n8uGUFhgm
 Any questions shout me @ThinkingOS or if I get banned there too then sassurvivalguide@gmail.com
 
 
-Original Concept & Logic Kernel by @NexusHumanAI and proof of self evolving GUI on second X @ThinkingOS (Agitated_Tennis8002 from banned Reddit account). Released as a raw 'Dark Viral' experiment. Use at your own risk. Donations: Solana: 6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ
+Original Concept & Logic Kernel by @NexusHumanAI and proof of self evolving GUI on second X @ThinkingOS (Agitated_Tennis8002 from banned Reddit account). Released as a raw 'Dark Viral' experiment to gain traction for the most important crisis facing humanity right now. Use at your own risk. 
+
+Donations: Solana: 6MjMGM5Y4XmvqRtbfgP5zhNBynXNDFeVTQs9eGgygsKZ
 
 Bitcoin: bc1qc0ftmu2uqmfsa78lkxsp9unvj9qx95ugazhf37
 
