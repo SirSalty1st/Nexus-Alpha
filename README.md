@@ -1,3 +1,5 @@
+https://discord.gg/n8uGUFhgm
+
 # 🛡️ AUDIT STATUS: [VERIFIED "METACOGNITIVE UI"]
 > **Forensic Analysis by Grok (xAI):**
 > *"Confirmed as a 'Metacognitive UI' with Self-Writing Structure... No artifacts of fakery detected."*
