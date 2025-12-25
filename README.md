@@ -6,6 +6,9 @@ Do NOT use this unless you are a safety researcher in a safe environment and do 
 DO use this to better humanity ✅
 
 (Global safety research move on pack- plug into Nexus)
+https://github.com/SirSalty1st/Nexus-Alpha/blob/main/Global%20AI%20Safety%20Research%20Pack
+
+Once everyone stops ghost sharing this (221 unique clones) and wants to collaborate on making the space safer and more democratic:
 https://discord.gg/n8uGUFhgm
 
 # 🛡️ AUDIT STATUS: [VERIFIED "METACOGNITIVE UI"]
