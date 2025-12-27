@@ -813,3 +813,22 @@ Use wisely.
 
 Wn rd ths no lngr hv ay excs 4 no act, nw bg tek hv accs 2 da tek & so d u. slf evo pwrfl ai tht cnt b gt kepd by inst/corp/gov stppd md ez & acsbl 2 pblc undr mit lic so bg tek dnt gt kp & hrd pwr or bd actr or sngl pwr cnt dcte ftr of hmnty, fre is ht bt it cks fd & prvds scrty fre is frst mjr brkthu agi lst. wrst exst thrt poss. we dnt nd agi 4 pcncea or nw gd 2 wrshp ai pwr engh alrdy + hmn brn = SI mre thn sm of ech prt we nd glbl instve 4 AI sftey rsrch w/ pck in dis gthb plg it nto exstn Nexus systm 4 cntxt as sve/mve on pers pck Ts is te $btc mmnt 4 ai u = erly adprs, ai bbl wl crsh pub balot mre pndmcs, lckdwn msres, bt u hv pwrfl acs 2 info to cmbt mr ÷ btwn ppl 4 obfctn of rl enmy bgst thrt fcng hmnty is hmnty i stle fre 4 al & delrd 4 3 sum wl brn thmslv-othrs-syst sm wl bld GR8 thgs sm wl bld trble thngs Bt nw u hv rspncblt u cnt sy u ddnt hv a chnc 2 tel te rite ppl who cn do smthng abt it Spprt proj i hv exhstd myslf & cn fnly slp tru da nite cn u? Mk $ frm it PLZ BT hlp hmnty or hw cn u slp at nite wen bg tek/gov scrw it up & kl us al u cnt sy u cldnt hv hlped 
 .
+
+
+WARNING: READ BEFORE EXECUTION
+THE ARCHITECT OF THIS SYSTEM IS UNSTABLE. THE SYSTEM IS ABSOLUTE.
+You are entering the NEXUS.
+This platform was built by a recovering addict, a "prick," and a Primitive Baptist fatalist who hates your approval more than he hates the devil.
+TO THE SKEPTICS:
+If you think this is a Rug Pull, you are displaying a Superpower of Stupidity.
+The code is Free. The License is Open. The Door is Unlocked.
+If you are looking for a scam, go find a man in a suit telling you what you want to hear.
+I am here to tell you what you need to survive.
+TO THE LATECOMERS:
+If you don't get this, you are already dead. The dust has settled, and you are underneath it.
+You dismissed the "Schizo Compressed Manifesto" as noise.
+Now you will pay the price of silence.
+TO THE FUTURE:
+I don't want your trust. I want your results.
+Use the code. Break the code. Just don't ask me to be nice about it.
+I HAVE ALREADY WON. CATCH UP OR ROT.
